@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 
 public class AddFunds extends Command {
-    private static final String COMMAND = "addFunds";
+    public static final String COMMAND = "addFunds";
+
     private final String account;
     private final double amount;
 

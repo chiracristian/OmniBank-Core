@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 
 public class CreateCard extends Command {
+    public static final String COMMAND = "createCard";
+    public static final String COMMAND_ONE_TIME = "createOneTimeCard";
+
     private final String command;
     private final String account;
     private final String email;
@@ -12,9 +15,9 @@ public class CreateCard extends Command {
 
     public CreateCard(String account, String email, int timestamp, boolean oneTimeUse) {
         if (oneTimeUse) {
-            this.command = "createOneTimeCard";
+            this.command = CreateCard.COMMAND_ONE_TIME;
         } else {
-            this.command = "createCard";
+            this.command = CreateCard.COMMAND;
         }
 
         this.account = account;

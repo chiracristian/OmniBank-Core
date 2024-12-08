@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 
 class SetMinBalance extends Command {
-    private static final String COMMAND = "setMinimumBalance";
+    public static final String COMMAND = "setMinimumBalance";
     private final double amount;
     private final String account;
 

@@ -7,7 +7,8 @@ import org.poo.bank.Bank;
 import org.poo.bank.Currency;
 
 class AddAccount extends Command {
-    private static final String COMMAND = "addAccount";
+    public static final String COMMAND = "addAccount";
+
     private final String email;
     private final Currency currency;
     private final AccountType accountType;

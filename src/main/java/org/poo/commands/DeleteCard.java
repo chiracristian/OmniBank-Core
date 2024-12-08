@@ -5,17 +5,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 
 class DeleteCard extends Command {
-    private static final String COMMAND = "deleteCard";
-    private final String account;
+    public static final String COMMAND = "deleteCard";
 
-    DeleteCard(String account, int timestamp) {
-        this.account = account;
+    private final String cardNumber;
+
+    DeleteCard(String cardNumber, int timestamp) {
+        this.cardNumber = cardNumber;
         this.timestamp = timestamp;
     }
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.deleteCard(account);
+        bank.deleteCard(cardNumber);
 
 //        ObjectNode result = mapper.createObjectNode();
 //        result.put("command", COMMAND);

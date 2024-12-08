@@ -7,22 +7,26 @@ public class CommandFactory {
 
     public static Command create(CommandInput input) {
         return switch (input.getCommand()) {
-            case "printUsers" -> new PrintUsers(input.getTimestamp());
+            case PrintUsers.COMMAND -> new PrintUsers(input.getTimestamp());
 
-            case "addAccount" -> new AddAccount(input.getEmail(), input.getCurrency(),
+            case AddAccount.COMMAND -> new AddAccount(input.getEmail(), input.getCurrency(),
                     input.getAccountType(), input.getTimestamp(), input.getInterestRate());
 
-            case "addFunds" -> new AddFunds(input.getAccount(), input.getAmount(), input.getTimestamp());
+            case AddFunds.COMMAND -> new AddFunds(input.getAccount(), input.getAmount(), input.getTimestamp());
 
-            case "createCard" -> new CreateCard(input.getAccount(),input.getEmail(), input.getTimestamp(), false);
+            case CreateCard.COMMAND -> new CreateCard(input.getAccount(), input.getEmail(),
+                    input.getTimestamp(),false);
 
-            case "createOneTimeCard" -> new CreateCard(input.getAccount(),input.getEmail(), input.getTimestamp(), true);
+            case CreateCard.COMMAND_ONE_TIME -> new CreateCard(input.getAccount(), input.getEmail(),
+                    input.getTimestamp(), true);
 
-            case "deleteAccount" -> new DeleteAccount(input.getAccount(), input.getTimestamp(), input.getEmail());
+            case DeleteAccount.COMMAND -> new DeleteAccount(input.getAccount(), input.getTimestamp(),
+                    input.getEmail());
 
-            case "deleteCard" -> new DeleteCard(input.getCardNumber(), input.getTimestamp());
+            case DeleteCard.COMMAND -> new DeleteCard(input.getCardNumber(), input.getTimestamp());
 
-            case "setMinimumBalance" -> new SetMinBalance(input.getAmount(), input.getAccount(), input.getTimestamp());
+            case SetMinBalance.COMMAND -> new SetMinBalance(input.getAmount(), input.getAccount(),
+                    input.getTimestamp());
 
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };

@@ -7,7 +7,7 @@ import org.poo.bank.Bank;
 import org.poo.bank.User;
 
 class PrintUsers extends Command {
-    private static final String COMMAND = "printUsers";
+    public static final String COMMAND = "printUsers";
 
     PrintUsers(int timestamp) {
         this.timestamp = timestamp;

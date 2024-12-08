@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 
 class DeleteAccount extends Command {
-    private static final String COMMAND = "deleteAccount";
+    public static final String COMMAND = "deleteAccount";
+
     private final String account;
     private final String email;
 
