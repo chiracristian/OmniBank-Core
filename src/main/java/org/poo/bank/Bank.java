@@ -18,6 +18,11 @@ public class Bank {
      */
     private final HashMap<String, Account> accounts;
 
+    /**
+     * Cards, referenced by their number
+     */
+    private final HashMap<String, Card> cards;
+
     public Bank(ObjectInput input) {
         users = new HashMap<>();
 
@@ -26,6 +31,19 @@ public class Bank {
         }
 
         accounts = new HashMap<>();
+        cards = new HashMap<>();
+    }
+
+    private Account getAccountRef(String account, String email) {
+        Account refAccount = accounts.get(account);
+        if (refAccount == null) {
+            throw new IllegalArgumentException("Account " + account + " doesn't exist!");
+        }
+        if (!users.get(email).getAccounts().contains(refAccount)) {
+            throw new IllegalArgumentException("Email of account " + account + " is not " + email);
+        }
+
+        return refAccount;
     }
 
     public void addAccount(String email, Currency currency, AccountType type) {
@@ -38,17 +56,28 @@ public class Bank {
     }
 
     public void deleteAccount(String account, String email) {
-        Account accountToDel = accounts.get(account);
-        if (accountToDel == null) {
-            throw new IllegalArgumentException("Tried to delete the non-existent account " + account);
-        }
-        if (!users.get(email).getAccounts().contains(accountToDel)) {
-            throw new IllegalArgumentException("Mismatch between account " + account + " and their email");
-        }
+        Account accountToDel = getAccountRef(account, email);
+
         if (accountToDel.getBalance() != 0.0) {
             throw new IllegalArgumentException("Account to be deleted " + accountToDel + " must have zero balance");
         }
         users.get(email).getAccounts().remove(accountToDel);
         accounts.remove(account);
+    }
+
+    public void createCard(String account, String email, boolean oneTimeUse) {
+        Account refAccount = getAccountRef(account, email);
+
+        Card createdCard = refAccount.createCard(oneTimeUse);
+        cards.put(createdCard.getNumber(), createdCard);
+    }
+
+    public void deleteCard(String cardNumber) {
+        Card cardToDel = cards.get(cardNumber);
+        if (cardToDel == null) {
+            throw new IllegalArgumentException("Card " + cardNumber + " doesn't exist");
+        }
+        cardToDel.markAsDeleted();
+        cards.remove(cardNumber);
     }
 }

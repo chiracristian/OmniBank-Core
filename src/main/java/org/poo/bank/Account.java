@@ -7,6 +7,7 @@ import lombok.Getter;
 import org.poo.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @Getter
 public class Account {
@@ -26,8 +27,10 @@ public class Account {
         balance += amount;
     }
 
-    public void createCard(boolean oneTimeUse) {
-        cards.add(new Card(oneTimeUse));
+    public Card createCard(boolean oneTimeUse) {
+        Card createdCard = new Card(oneTimeUse);
+        cards.add(createdCard);
+        return createdCard;
     }
 
     public ObjectNode toJSON(ObjectMapper mapper) {
@@ -40,7 +43,9 @@ public class Account {
 
         ArrayNode cardsNode = mapper.createArrayNode();
         for (Card card : cards) {
-            cardsNode.add(card.toJSON(mapper));
+            if (!card.isDeleted()) {
+                cardsNode.add(card.toJSON(mapper));
+            }
         }
         result.set("cards", cardsNode);
 

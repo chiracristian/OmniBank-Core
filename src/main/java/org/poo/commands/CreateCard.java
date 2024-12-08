@@ -25,7 +25,8 @@ public class CreateCard extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.getAccounts().get(account).createCard(oneTimeUse);
+        //bank.getAccounts().get(account).createCard(oneTimeUse);
+        bank.createCard(account, email, oneTimeUse);
         return null;
     }
 }

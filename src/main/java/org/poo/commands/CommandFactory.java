@@ -20,6 +20,8 @@ public class CommandFactory {
 
             case "deleteAccount" -> new DeleteAccount(input.getAccount(), input.getTimestamp(), input.getEmail());
 
+            case "deleteCard" -> new DeleteCard(input.getCardNumber(), input.getTimestamp());
+
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };
     }
