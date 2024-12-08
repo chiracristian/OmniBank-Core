@@ -36,4 +36,19 @@ public class Bank {
         Account addedAccount = users.get(email).addAccount(currency, type, interestRate);
         accounts.put(addedAccount.getIban(), addedAccount);
     }
+
+    public void deleteAccount(String account, String email) {
+        Account accountToDel = accounts.get(account);
+        if (accountToDel == null) {
+            throw new IllegalArgumentException("Tried to delete the non-existent account " + account);
+        }
+        if (!users.get(email).getAccounts().contains(accountToDel)) {
+            throw new IllegalArgumentException("Mismatch between account " + account + " and their email");
+        }
+        if (accountToDel.getBalance() != 0.0) {
+            throw new IllegalArgumentException("Account to be deleted " + accountToDel + " must have zero balance");
+        }
+        users.get(email).getAccounts().remove(accountToDel);
+        accounts.remove(account);
+    }
 }

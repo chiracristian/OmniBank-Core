@@ -44,6 +44,8 @@ public class CommandManager {
             }
         }
 
+        System.out.println("Ended executing commands for current test\n");
+
         return result;
     }
 }

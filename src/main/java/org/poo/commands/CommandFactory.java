@@ -18,6 +18,8 @@ public class CommandFactory {
 
             case "createOneTimeCard" -> new CreateCard(input.getAccount(),input.getEmail(), input.getTimestamp(), true);
 
+            case "deleteAccount" -> new DeleteAccount(input.getAccount(), input.getTimestamp(), input.getEmail());
+
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };
     }

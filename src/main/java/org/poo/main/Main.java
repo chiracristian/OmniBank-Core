@@ -8,6 +8,7 @@ import org.poo.checker.Checker;
 import org.poo.checker.CheckerConstants;
 import org.poo.commands.CommandManager;
 import org.poo.fileio.ObjectInput;
+import org.poo.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,6 +79,8 @@ public final class Main {
         CommandManager commandManager = new CommandManager(inputData.getCommands(), bank, objectMapper);
 
         ArrayNode output = commandManager.executeAll();
+
+        Utils.resetRandom();
 
         /*
          * TODO Implement your function here
