@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
+import lombok.Setter;
 import org.poo.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 @Getter
 public class Account {
@@ -16,11 +16,16 @@ public class Account {
     private final Currency currency;
     private final ArrayList<Card> cards;
 
+    @Setter
+    private double minimumBalance;
+
     Account(Currency currency) {
         this.iban = Utils.generateIBAN();
         this.balance = 0.0;
         this.currency = currency;
         this.cards = new ArrayList<>();
+
+        this.minimumBalance = 0;
     }
 
     public void addFunds(double amount) {

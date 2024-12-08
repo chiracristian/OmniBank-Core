@@ -22,6 +22,8 @@ public class CommandFactory {
 
             case "deleteCard" -> new DeleteCard(input.getCardNumber(), input.getTimestamp());
 
+            case "setMinimumBalance" -> new SetMinBalance(input.getAmount(), input.getAccount(), input.getTimestamp());
+
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };
     }
