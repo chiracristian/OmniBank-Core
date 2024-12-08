@@ -3,8 +3,10 @@ package org.poo.main;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.poo.bank.Bank;
 import org.poo.checker.Checker;
 import org.poo.checker.CheckerConstants;
+import org.poo.commands.CommandManager;
 import org.poo.fileio.ObjectInput;
 
 import java.io.File;
@@ -72,7 +74,10 @@ public final class Main {
         File file = new File(CheckerConstants.TESTS_PATH + filePath1);
         ObjectInput inputData = objectMapper.readValue(file, ObjectInput.class);
 
-        ArrayNode output = objectMapper.createArrayNode();
+        Bank bank = new Bank(inputData);
+        CommandManager commandManager = new CommandManager(inputData.getCommands(), bank, objectMapper);
+
+        ArrayNode output = commandManager.executeAll();
 
         /*
          * TODO Implement your function here
