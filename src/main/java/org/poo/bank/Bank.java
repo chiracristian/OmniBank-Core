@@ -50,37 +50,37 @@ public class Bank {
         currencyManager = new CurrencyManager(input.getExchangeRates());
     }
 
-    private Account getAccountRef(String account, String email) {
-        Account refAccount = accounts.get(account);
+    private Account getAccountRef(String iban, String email) {
+        Account refAccount = accounts.get(iban);
         if (refAccount == null) {
-            throw new IllegalArgumentException("Account " + account + " doesn't exist!");
+            throw new IllegalArgumentException("Account " + iban + " doesn't exist!");
         }
         if (!users.get(email).getAccounts().contains(refAccount)) {
-            throw new IllegalArgumentException("Email of account " + account + " is not " + email);
+            throw new IllegalArgumentException("Email of account " + iban + " is not " + email);
         }
 
         return refAccount;
     }
 
-    public void addAccount(Account addedAccount, String emailBelongsTo) {
+    public void addAccount(Account addedAccount, String ownerEmail) {
         accounts.put(addedAccount.getIban(), addedAccount);
-        users.get(emailBelongsTo).addAccount(addedAccount);
+        users.get(ownerEmail).addAccount(addedAccount);
     }
 
-    public void deleteAccount(String account, String email) {
-        Account accountToDel = getAccountRef(account, email);
+    public void deleteAccount(String iban, String email) {
+        Account accountToDel = getAccountRef(iban, email);
 
         if (accountToDel.getBalance() != 0.0) {
             throw new IllegalArgumentException("Account " + accountToDel + " still has funds.");
         }
         users.get(email).getAccounts().remove(accountToDel);
-        accounts.remove(account);
+        accounts.remove(iban);
     }
 
-    public void createCard(String account, String email, boolean oneTimeUse) {
-        Account refAccount = getAccountRef(account, email);
-
+    public void createCard(String iban, String email, boolean oneTimeUse) {
+        Account refAccount = getAccountRef(iban, email);
         Card createdCard = new Card(refAccount, oneTimeUse);
+
         refAccount.addCard(createdCard);
         cards.put(createdCard.getNumber(), createdCard);
     }
@@ -88,22 +88,26 @@ public class Bank {
     public void deleteCard(String cardNumber) {
         Card cardToDel = cards.get(cardNumber);
         if (cardToDel == null) {
-            throw new IllegalArgumentException("Card " + cardNumber + " doesn't exist");
+            throw new NonExistingCardException(cardNumber);
         }
-        cardToDel.markAsDeleted();
+
+        cardToDel.getAssociatedAccount().deleteCard(cardToDel);
         cards.remove(cardNumber);
     }
 
     public void payOnline(String cardNumber, double amount, String currency, String description,
                           String commerciant, String email) {
         Card cardUsed = cards.get(cardNumber);
+        if (cardUsed == null) {
+            throw new NonExistingCardException(cardNumber);
+        }
         Account refAccount = getAccountRef(cardUsed.getAssociatedAccount().getIban(), email);
 
-        double deductedSum = amount;
-        if (!currency.equals(refAccount.getCurrency())) {
-            deductedSum = currencyManager.performConversion(amount, currency, refAccount.getCurrency());
-        }
+        refAccount.decreaseFunds(currencyManager.convert(amount, currency, refAccount.getCurrency()));
 
-        refAccount.decreaseFunds(deductedSum);
+        if (cardUsed.isOneTimeUse()) {
+            refAccount.deleteCard(cardUsed);
+            createCard(refAccount.getIban(), email, true);
+        }
     }
 }

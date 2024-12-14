@@ -3,6 +3,8 @@ package org.poo.commands;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
+import org.poo.bank.NonExistingCardException;
+import org.poo.bank.accounts.NotEnoughFundsException;
 
 public class PayOnline extends Command {
     public static final String COMMAND = "payOnline";
@@ -27,7 +29,24 @@ public class PayOnline extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.payOnline(cardNumber, amount, currency, description, commerciant, email);
-        return null;
+        ObjectNode result = null;
+        try {
+            bank.payOnline(cardNumber, amount, currency, description, commerciant, email);
+        } catch (NonExistingCardException nonExistingCardException) {
+            result = mapper.createObjectNode();
+            result.put("command", COMMAND);
+
+            ObjectNode outputNode = mapper.createObjectNode();
+            outputNode.put("timestamp", timestamp);
+            outputNode.put("description", "Card not found");
+
+            result.set("output", outputNode);
+
+            result.put("timestamp", timestamp);
+        } catch (NotEnoughFundsException ignored) {
+
+        }
+
+        return result;
     }
 }

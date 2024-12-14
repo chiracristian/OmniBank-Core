@@ -44,6 +44,10 @@ public class Account {
         cards.add(card);
     }
 
+    public void deleteCard(Card card) {
+        cards.remove(card);
+    }
+
     public ObjectNode toJSON(ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
@@ -54,9 +58,7 @@ public class Account {
 
         ArrayNode cardsNode = mapper.createArrayNode();
         for (Card card : cards) {
-            if (!card.isDeleted()) {
-                cardsNode.add(card.toJSON(mapper));
-            }
+            cardsNode.add(card.toJSON(mapper));
         }
         result.set("cards", cardsNode);
 

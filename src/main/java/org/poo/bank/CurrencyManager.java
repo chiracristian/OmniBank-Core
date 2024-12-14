@@ -33,7 +33,7 @@ public class CurrencyManager {
         conversionPaths = new BFSShortestPath<>(conversionRates);
     }
 
-    public double performConversion(double amountToExchange, String from, String to) {
+    public double convert(double amountToExchange, String from, String to) {
         List<Double> conversionRates = conversionPaths.getPath(from, to).getEdgeList();
 
         double result = amountToExchange;
