@@ -28,7 +28,7 @@ public class Bank {
 
     private final ArrayList<CommerciantCategory> commerciants;
 
-    private CurrencyManager currencyManager;
+    private final CurrencyManager currencyManager;
 
     public Bank(ObjectInput input) {
         users = new HashMap<>();
@@ -80,7 +80,8 @@ public class Bank {
     public void createCard(String account, String email, boolean oneTimeUse) {
         Account refAccount = getAccountRef(account, email);
 
-        Card createdCard = refAccount.createCard(oneTimeUse);
+        Card createdCard = new Card(refAccount, oneTimeUse);
+        refAccount.addCard(createdCard);
         cards.put(createdCard.getNumber(), createdCard);
     }
 
@@ -95,6 +96,14 @@ public class Bank {
 
     public void payOnline(String cardNumber, double amount, String currency, String description,
                           String commerciant, String email) {
+        Card cardUsed = cards.get(cardNumber);
+        Account refAccount = getAccountRef(cardUsed.getAssociatedAccount().getIban(), email);
 
+        double deductedSum = amount;
+        if (!currency.equals(refAccount.getCurrency())) {
+            deductedSum = currencyManager.performConversion(amount, currency, refAccount.getCurrency());
+        }
+
+        refAccount.decreaseFunds(deductedSum);
     }
 }

@@ -34,13 +34,14 @@ public class Account {
     }
 
     public void decreaseFunds(double amount) {
+        if (balance - amount < minimumBalance) {
+            throw new NotEnoughFundsException(this);
+        }
         balance -= amount;
     }
 
-    public Card createCard(boolean oneTimeUse) {
-        Card createdCard = new Card(oneTimeUse);
-        cards.add(createdCard);
-        return createdCard;
+    public void addCard(Card card) {
+        cards.add(card);
     }
 
     public ObjectNode toJSON(ObjectMapper mapper) {

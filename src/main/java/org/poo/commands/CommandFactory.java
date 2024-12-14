@@ -28,6 +28,9 @@ public class CommandFactory {
             case SetMinBalance.COMMAND -> new SetMinBalance(input.getAmount(), input.getAccount(),
                     input.getTimestamp());
 
+            case PayOnline.COMMAND -> new PayOnline(input.getCardNumber(), input.getAmount(), input.getCurrency(),
+                    input.getTimestamp(), input.getCommerciant(), input.getDescription(), input.getEmail());
+
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };
     }
