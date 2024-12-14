@@ -8,13 +8,14 @@ import org.poo.fileio.UserInput;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Getter
 public class Bank {
     /**
      * Users, referenced by their email
      */
-    private final HashMap<String, User> users;
+    private final LinkedHashMap<String, User> users;
 
     /**
      * Accounts, referenced by their IBAN
@@ -31,7 +32,7 @@ public class Bank {
     private final CurrencyManager currencyManager;
 
     public Bank(ObjectInput input) {
-        users = new HashMap<>();
+        users = new LinkedHashMap<>();
 
         for (UserInput userIn : input.getUsers()) {
             users.put(userIn.getEmail(), new User(userIn));
@@ -109,5 +110,13 @@ public class Bank {
             refAccount.deleteCard(cardUsed);
             createCard(refAccount.getIban(), email, true);
         }
+    }
+
+    public void sendMoney(String fromIban, double amount, String toIban, String description) {
+        Account fromAccount = accounts.get(fromIban);
+        Account toAccount = accounts.get(toIban);
+
+        fromAccount.decreaseFunds(amount);
+        toAccount.addFunds(currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency()));
     }
 }

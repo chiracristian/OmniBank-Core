@@ -31,6 +31,9 @@ public class CommandFactory {
             case PayOnline.COMMAND -> new PayOnline(input.getCardNumber(), input.getAmount(), input.getCurrency(),
                     input.getTimestamp(), input.getCommerciant(), input.getDescription(), input.getEmail());
 
+            case SendMoney.COMMAND -> new SendMoney(input.getAccount(), input.getAmount(), input.getReceiver(),
+                    input.getTimestamp(), input.getDescription());
+
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };
     }

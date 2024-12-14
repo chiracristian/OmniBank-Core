@@ -13,6 +13,8 @@ public class CommandManager {
     private final Bank refBank;
     private final ObjectMapper refMapper;
 
+    private static int currentTest = 0;
+
     public CommandManager(CommandInput[] input, Bank refBank, ObjectMapper refMapper) {
         commands = new ArrayList<>(input.length);
         for (CommandInput cmdIn : input) {
@@ -25,11 +27,14 @@ public class CommandManager {
         }
         this.refBank = refBank;
         this.refMapper = refMapper;
+
+        currentTest++;
     }
 
     public ArrayNode executeAll() {
         ArrayNode result = refMapper.createArrayNode();
 
+        System.out.println("Started executing test " + currentTest);
         for (Command command : commands) {
             ObjectNode output;
             try {
@@ -44,7 +49,7 @@ public class CommandManager {
             }
         }
 
-        System.out.println("Ended executing commands for current test\n");
+        System.out.println("Ended executing commands for test " + currentTest + "\n");
 
         return result;
     }
