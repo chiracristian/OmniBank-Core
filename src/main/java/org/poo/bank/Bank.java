@@ -1,9 +1,12 @@
 package org.poo.bank;
 
 import lombok.Getter;
+import org.poo.bank.accounts.Account;
+import org.poo.fileio.CommerciantInput;
 import org.poo.fileio.ObjectInput;
 import org.poo.fileio.UserInput;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 @Getter
@@ -23,6 +26,10 @@ public class Bank {
      */
     private final HashMap<String, Card> cards;
 
+    private final ArrayList<CommerciantCategory> commerciants;
+
+    private CurrencyManager currencyManager;
+
     public Bank(ObjectInput input) {
         users = new HashMap<>();
 
@@ -32,6 +39,15 @@ public class Bank {
 
         accounts = new HashMap<>();
         cards = new HashMap<>();
+        commerciants = new ArrayList<>();
+
+        if (input.getCommerciants() != null) {
+            for (CommerciantInput commIn : input.getCommerciants()) {
+                commerciants.add(new CommerciantCategory(commIn));
+            }
+        }
+
+        currencyManager = new CurrencyManager(input.getExchangeRates());
     }
 
     private Account getAccountRef(String account, String email) {
@@ -46,20 +62,16 @@ public class Bank {
         return refAccount;
     }
 
-    public void addAccount(String email, Currency currency, AccountType type) {
-        addAccount(email, currency, type ,0.0);
-    }
-
-    public void addAccount(String email, Currency currency, AccountType type, double interestRate) {
-        Account addedAccount = users.get(email).addAccount(currency, type, interestRate);
+    public void addAccount(Account addedAccount, String emailBelongsTo) {
         accounts.put(addedAccount.getIban(), addedAccount);
+        users.get(emailBelongsTo).addAccount(addedAccount);
     }
 
     public void deleteAccount(String account, String email) {
         Account accountToDel = getAccountRef(account, email);
 
         if (accountToDel.getBalance() != 0.0) {
-            throw new IllegalArgumentException("Account to be deleted " + accountToDel + " must have zero balance");
+            throw new IllegalArgumentException("Account " + accountToDel + " still has funds.");
         }
         users.get(email).getAccounts().remove(accountToDel);
         accounts.remove(account);
@@ -79,5 +91,10 @@ public class Bank {
         }
         cardToDel.markAsDeleted();
         cards.remove(cardNumber);
+    }
+
+    public void payOnline(String cardNumber, double amount, String currency, String description,
+                          String commerciant, String email) {
+
     }
 }

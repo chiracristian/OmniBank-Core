@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
+import org.poo.bank.accounts.Account;
 import org.poo.fileio.UserInput;
 
 import java.util.ArrayList;
@@ -22,13 +23,8 @@ public class User {
         accounts = new ArrayList<>();
     }
 
-    public Account addAccount(Currency currency, AccountType type, double interestRate) {
-        switch (type) {
-            case AccountType.CLASSIC -> accounts.add(new Account(currency));
-            case AccountType.SAVINGS -> accounts.add(new SavingsAccount(currency, interestRate));
-        }
-
-        return accounts.getLast();
+    public void addAccount(Account account) {
+        accounts.add(account);
     }
 
     public ObjectNode toJSON(ObjectMapper mapper) {

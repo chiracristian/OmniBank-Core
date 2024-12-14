@@ -12,7 +12,7 @@ public class Card {
     private final boolean oneTimeUse;
     private boolean deleted;
 
-    Card(boolean oneTimeUse) {
+    public Card(boolean oneTimeUse) {
         this.oneTimeUse = oneTimeUse;
         this.number = Utils.generateCardNumber();
         this.status = CardStatus.ACTIVE;
