@@ -16,8 +16,8 @@ public class SavingsAccount extends Account {
         return AccountType.SAVINGS.getString();
     }
 
-    public void setInterestRate(double interestRate) {
+    @Override
+    public void changeInterestRate(double interestRate, int timestamp) {
         this.interestRate = interestRate;
-        // TODO: add transaction for interest rate
     }
 }

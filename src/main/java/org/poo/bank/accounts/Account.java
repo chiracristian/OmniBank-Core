@@ -55,6 +55,8 @@ public class Account {
         return AccountType.CLASSIC.getString();
     }
 
+    public void changeInterestRate(double interestRate, int timestamp) { }
+
     public ObjectNode toJSON(ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 

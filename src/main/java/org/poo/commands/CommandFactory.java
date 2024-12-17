@@ -20,6 +20,7 @@ public class CommandFactory {
             case PrintTransactions.COMMAND -> new PrintTransactions(input);
             case SetAlias.COMMAND -> new SetAlias(input);
             case CheckCardStatus.COMMAND -> new CheckCardStatus(input);
+            case ChangeInterestRate.COMMAND -> new ChangeInterestRate(input);
 
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };
