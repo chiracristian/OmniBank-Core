@@ -37,7 +37,7 @@ public class Account {
     }
 
     public void decreaseFunds(double amount) {
-        if (balance - amount < minimumBalance) {
+        if (balance < amount) {
             throw new NotEnoughFundsException(this);
         }
         balance -= amount;

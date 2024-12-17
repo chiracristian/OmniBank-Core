@@ -3,6 +3,7 @@ package org.poo.bank;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
+import lombok.Setter;
 import org.poo.bank.accounts.Account;
 import org.poo.utils.Utils;
 
@@ -25,32 +26,35 @@ public class Card {
     private final Account associatedAccount;
     private final boolean oneTimeUse;
 
+    @Setter
+    private Status status;
+
     public Card(Account associatedAccount, boolean oneTimeUse) {
         this.number = Utils.generateCardNumber();
         this.associatedAccount = associatedAccount;
-
         this.oneTimeUse = oneTimeUse;
+
+        this.status = Status.ACTIVE;
     }
 
-    public Status getStatus() {
+    public void updateStatus() {
         double currentBalance = associatedAccount.getBalance();
         double minimumBalance = associatedAccount.getMinimumBalance();
 
         if (currentBalance <= minimumBalance) {
-            return Status.FROZEN;
+            status = Status.FROZEN;
+        } else if (currentBalance - minimumBalance <= Status.WARNING_LIMIT) {
+            status = Status.WARNING;
+        } else if (status == Status.WARNING) {
+            status = Status.ACTIVE;
         }
-        if (currentBalance - minimumBalance <= Status.WARNING_LIMIT) {
-            return Status.WARNING;
-        }
-
-        return Status.ACTIVE;
     }
 
     public ObjectNode toJSON(ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("cardNumber", number);
-        result.put("status", "active");
+        result.put("status", status.getString());
 
         return result;
     }

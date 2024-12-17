@@ -128,40 +128,68 @@ public class Bank {
         cardToDel.getAssociatedAccount().deleteCard(cardToDel);
     }
 
-    private boolean decreaseFundsSafely(Account account, double amount, int timestamp) {
+    private void decreaseFundsSafely(Account account, double amount, int timestamp) {
         try {
             account.decreaseFunds(amount);
-            return true;
         } catch (NotEnoughFundsException notEnoughFunds) {
             Transaction insufficientFundsTransaction = new InsufficientFunds(timestamp);
             users.get(account.getOwnerEmail()).addTransaction(insufficientFundsTransaction);
-            return false;
+            throw notEnoughFunds;
         }
     }
 
+    public void checkCardStatus(String cardNumber, int timestamp) {
+        Card refCard = cards.get(cardNumber);
+        if (refCard == null) {
+            throw new NonExistingCardException(cardNumber);
+        }
+        Account refAccount = refCard.getAssociatedAccount();
+
+        Card.Status prevStatus = refCard.getStatus();
+        refCard.updateStatus();
+        if (prevStatus != refCard.getStatus()) {
+        if (refCard.getStatus() == Card.Status.FROZEN) {
+            Transaction reachedMinimum = new ReachedMinimumFunds(timestamp);
+            users.get(refAccount.getOwnerEmail()).addTransaction(reachedMinimum);
+        }
+        }
+        //System.out.println("Card status became " + status.getString() + " T=" + timestamp);
+    }
+
     public void payOnline(String cardNumber, double amount, String currency, int timestamp,
-                          String description, String commerciant, String email) {
+                          String commerciant, String email) {
         Card cardUsed = cards.get(cardNumber);
         if (cardUsed == null) {
             //System.out.println("Doesn't exist card " + cardNumber + "\n");
             throw new NonExistingCardException(cardNumber);
         }
+
         //System.out.println("Paying with card " + cardNumber + " one time? " + cardUsed.isOneTimeUse() + "\n");
         Account refAccount = getAccountByIban(cardUsed.getAssociatedAccount().getIban());
         checkEmailAccountMatch(refAccount, email);
 
+        if (cardUsed.getStatus() == Card.Status.FROZEN) {
+            Transaction frozenCardTransaction = new CardIsFrozen(timestamp);
+            users.get(email).addTransaction(frozenCardTransaction);
+            return;
+        }
+
         double convertedAmount = currencyManager.convert(amount, currency, refAccount.getCurrency());
-        if (!decreaseFundsSafely(refAccount, convertedAmount, timestamp)) {
+        try {
+            decreaseFundsSafely(refAccount, convertedAmount, timestamp);
+        } catch (NotEnoughFundsException notEnoughFunds) {
             return;
         }
 
         if (cardUsed.isOneTimeUse()) {
-            //deleteCard(cardNumber);
+            cards.remove(cardUsed.getNumber());
+            cardUsed.getAssociatedAccount().deleteCard(cardUsed);
+
             createCard(refAccount.getIban(), email, true);
         }
 
         Transaction successTransaction = new CardPayment(timestamp, convertedAmount, commerciant);
-        users.get(refAccount.getOwnerEmail()).addTransaction(successTransaction);
+        users.get(email).addTransaction(successTransaction);
     }
 
     public void setAlias(String email, String iban, String alias) {
@@ -178,7 +206,9 @@ public class Bank {
 
         Account toAccount = getAccountByAliasOrIban(toAliasOrIban);
 
-        if (!decreaseFundsSafely(fromAccount, amount, timestamp)) {
+        try {
+            decreaseFundsSafely(fromAccount, amount, timestamp);
+        } catch (NotEnoughFundsException notEnoughFunds) {
             return;
         }
         toAccount.addFunds(currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency()));
