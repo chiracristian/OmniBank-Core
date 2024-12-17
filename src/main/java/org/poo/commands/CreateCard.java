@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.bank.accounts.transactions.CardCreated;
 import org.poo.bank.Card;
+import org.poo.fileio.CommandInput;
 
 public class CreateCard extends Command {
     public static final String COMMAND = "createCard";
@@ -15,16 +16,16 @@ public class CreateCard extends Command {
     private final String email;
     private final boolean oneTimeUse;
 
-    public CreateCard(String account, String email, int timestamp, boolean oneTimeUse) {
+    public CreateCard(CommandInput input, boolean oneTimeUse) {
+        super(input);
 //        if (oneTimeUse) {
 //            this.command = CreateCard.COMMAND_ONE_TIME;
 //        } else {
 //            this.command = CreateCard.COMMAND;
 //        }
 
-        this.account = account;
-        this.email = email;
-        this.timestamp = timestamp;
+        this.account = input.getAccount();
+        this.email = input.getEmail();
         this.oneTimeUse = oneTimeUse;
     }
 

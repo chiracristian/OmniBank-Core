@@ -15,6 +15,7 @@ public class Card {
         FROZEN("frozen");
 
         private final String string;
+        public static final double WARNING_LIMIT = 30.0;
 
         Status(String string) {
             this.string = string;
@@ -22,22 +23,34 @@ public class Card {
     }
     private final String number;
     private final Account associatedAccount;
-    private Status status;
     private final boolean oneTimeUse;
 
     public Card(Account associatedAccount, boolean oneTimeUse) {
         this.number = Utils.generateCardNumber();
         this.associatedAccount = associatedAccount;
 
-        this.status = Status.ACTIVE;
         this.oneTimeUse = oneTimeUse;
+    }
+
+    public Status getStatus() {
+        double currentBalance = associatedAccount.getBalance();
+        double minimumBalance = associatedAccount.getMinimumBalance();
+
+        if (currentBalance <= minimumBalance) {
+            return Status.FROZEN;
+        }
+        if (currentBalance - minimumBalance <= Status.WARNING_LIMIT) {
+            return Status.WARNING;
+        }
+
+        return Status.ACTIVE;
     }
 
     public ObjectNode toJSON(ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("cardNumber", number);
-        result.put("status", status.getString());
+        result.put("status", "active");
 
         return result;
     }

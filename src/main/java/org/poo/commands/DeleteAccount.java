@@ -3,6 +3,7 @@ package org.poo.commands;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
+import org.poo.fileio.CommandInput;
 
 class DeleteAccount extends Command {
     public static final String COMMAND = "deleteAccount";
@@ -10,10 +11,11 @@ class DeleteAccount extends Command {
     private final String account;
     private final String email;
 
-    DeleteAccount(String account, int timestamp, String email) {
-        this.account = account;
-        this.timestamp = timestamp;
-        this.email = email;
+    DeleteAccount(CommandInput input) {
+        super(input);
+        this.account = input.getAccount();
+        this.timestamp = input.getTimestamp();
+        this.email = input.getEmail();
     }
 
     @Override

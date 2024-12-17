@@ -3,6 +3,7 @@ package org.poo.commands;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
+import org.poo.fileio.CommandInput;
 
 public class SetAlias extends Command {
     public static final String COMMAND = "setAlias";
@@ -11,11 +12,11 @@ public class SetAlias extends Command {
     private final String account;
     private final String alias;
 
-    public SetAlias(String email, String account, String alias, int timestamp) {
-        this.email = email;
-        this.account = account;
-        this.alias = alias;
-        this.timestamp = timestamp;
+    public SetAlias(CommandInput input) {
+        super(input);
+        this.email = input.getEmail();
+        this.account = input.getAccount();
+        this.alias = input.getAlias();
     }
 
     @Override

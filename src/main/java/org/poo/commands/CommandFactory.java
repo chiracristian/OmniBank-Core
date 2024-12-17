@@ -7,37 +7,18 @@ public class CommandFactory {
 
     public static Command create(CommandInput input) {
         return switch (input.getCommand()) {
-            case PrintUsers.COMMAND -> new PrintUsers(input.getTimestamp());
-
-            case AddAccount.COMMAND -> new AddAccount(input.getEmail(), input.getCurrency(),
-                    input.getAccountType(), input.getTimestamp(), input.getInterestRate());
-
-            case AddFunds.COMMAND -> new AddFunds(input.getAccount(), input.getAmount(), input.getTimestamp());
-
-            case CreateCard.COMMAND -> new CreateCard(input.getAccount(), input.getEmail(),
-                    input.getTimestamp(),false);
-
-            case CreateCard.COMMAND_ONE_TIME -> new CreateCard(input.getAccount(), input.getEmail(),
-                    input.getTimestamp(), true);
-
-            case DeleteAccount.COMMAND -> new DeleteAccount(input.getAccount(), input.getTimestamp(),
-                    input.getEmail());
-
-            case DeleteCard.COMMAND -> new DeleteCard(input.getEmail(), input.getCardNumber(), input.getTimestamp());
-
-            case SetMinBalance.COMMAND -> new SetMinBalance(input.getAmount(), input.getAccount(),
-                    input.getTimestamp());
-
-            case PayOnline.COMMAND -> new PayOnline(input.getCardNumber(), input.getAmount(), input.getCurrency(),
-                    input.getTimestamp(), input.getCommerciant(), input.getDescription(), input.getEmail());
-
-            case SendMoney.COMMAND -> new SendMoney(input.getAccount(), input.getAmount(), input.getReceiver(),
-                    input.getTimestamp(), input.getEmail(), input.getDescription());
-
-            case PrintTransactions.COMMAND -> new PrintTransactions(input.getTimestamp(), input.getEmail());
-
-            case SetAlias.COMMAND -> new SetAlias(input.getEmail(), input.getAccount(), input.getAlias(),
-                    input.getTimestamp());
+            case PrintUsers.COMMAND -> new PrintUsers(input);
+            case AddAccount.COMMAND -> new AddAccount(input);
+            case AddFunds.COMMAND -> new AddFunds(input);
+            case CreateCard.COMMAND -> new CreateCard(input, false);
+            case CreateCard.COMMAND_ONE_TIME -> new CreateCard(input,true);
+            case DeleteAccount.COMMAND -> new DeleteAccount(input);
+            case DeleteCard.COMMAND -> new DeleteCard(input);
+            case SetMinBalance.COMMAND -> new SetMinBalance(input);
+            case PayOnline.COMMAND -> new PayOnline(input);
+            case SendMoney.COMMAND -> new SendMoney(input);
+            case PrintTransactions.COMMAND -> new PrintTransactions(input);
+            case SetAlias.COMMAND -> new SetAlias(input);
 
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };

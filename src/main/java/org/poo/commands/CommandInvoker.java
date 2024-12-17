@@ -8,14 +8,14 @@ import org.poo.fileio.CommandInput;
 
 import java.util.ArrayList;
 
-public class CommandManager {
+public class CommandInvoker {
     private final ArrayList<Command> commands;
     private final Bank refBank;
     private final ObjectMapper refMapper;
 
     private static int currentTest = 0;
 
-    public CommandManager(CommandInput[] input, Bank refBank, ObjectMapper refMapper) {
+    public CommandInvoker(CommandInput[] input, Bank refBank, ObjectMapper refMapper) {
         commands = new ArrayList<>(input.length);
         for (CommandInput cmdIn : input) {
             try {
@@ -49,7 +49,8 @@ public class CommandManager {
             }
         }
 
-        System.out.println("Ended executing commands for test " + currentTest + "----------------------------\n");
+        System.out.println("Ended executing commands for test " + currentTest);
+        System.out.println("--------------------------------------------------\n");
 
         return result;
     }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.bank.exceptions.NonExistingIbanException;
 import org.poo.bank.exceptions.NotEnoughFundsException;
+import org.poo.fileio.CommandInput;
 
 public class SendMoney extends Command {
     public static final String COMMAND = "sendMoney";
@@ -12,17 +13,16 @@ public class SendMoney extends Command {
     private final String account;
     private final double amount;
     private final String receiver;
-    private final int timestamp;
     private final String email;
     private final String description;
 
-    public SendMoney(String account, double amount, String receiver, int timestamp, String email, String description) {
-        this.account = account;
-        this.amount = amount;
-        this.receiver = receiver;
-        this.timestamp = timestamp;
-        this.email = email;
-        this.description = description;
+    public SendMoney(CommandInput input) {
+        super(input);
+        this.account = input.getAccount();
+        this.amount = input.getAmount();
+        this.receiver = input.getReceiver();
+        this.email = input.getEmail();
+        this.description = input.getDescription();
     }
 
     @Override

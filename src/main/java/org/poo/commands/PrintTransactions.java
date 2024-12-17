@@ -4,15 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
+import org.poo.fileio.CommandInput;
 
 class PrintTransactions extends Command {
     public static final String COMMAND = "printTransactions";
 
     private final String email;
 
-    PrintTransactions(int timestamp, String email) {
-        this.timestamp = timestamp;
-        this.email = email;
+    PrintTransactions(CommandInput input) {
+        super(input);
+        this.email = input.getEmail();
     }
 
     @Override

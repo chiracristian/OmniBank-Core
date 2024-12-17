@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.poo.bank.Bank;
 import org.poo.checker.Checker;
 import org.poo.checker.CheckerConstants;
-import org.poo.commands.CommandManager;
+import org.poo.commands.CommandInvoker;
 import org.poo.fileio.ObjectInput;
 import org.poo.utils.Utils;
 
@@ -76,9 +76,9 @@ public final class Main {
         ObjectInput inputData = objectMapper.readValue(file, ObjectInput.class);
 
         Bank bank = new Bank(inputData);
-        CommandManager commandManager = new CommandManager(inputData.getCommands(), bank, objectMapper);
+        CommandInvoker commandInvoker = new CommandInvoker(inputData.getCommands(), bank, objectMapper);
 
-        ArrayNode output = commandManager.executeAll();
+        ArrayNode output = commandInvoker.executeAll();
 
         Utils.resetRandom();
 

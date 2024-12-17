@@ -6,6 +6,7 @@ import org.poo.bank.Bank;
 import org.poo.bank.exceptions.NonExistingCardException;
 import org.poo.bank.exceptions.NonExistingIbanException;
 import org.poo.bank.exceptions.NotEnoughFundsException;
+import org.poo.fileio.CommandInput;
 
 public class PayOnline extends Command {
     public static final String COMMAND = "payOnline";
@@ -17,15 +18,14 @@ public class PayOnline extends Command {
     private final String commerciant;
     private final String email;
 
-    public PayOnline(String cardNumber, double amount, String currency, int timestamp,
-                     String commerciant, String description, String email) {
-        this.cardNumber = cardNumber;
-        this.amount = amount;
-        this.currency = currency;
-        this.timestamp = timestamp;
-        this.commerciant = commerciant;
-        this.description = description;
-        this.email = email;
+    public PayOnline(CommandInput input) {
+        super(input);
+        this.cardNumber = input.getCardNumber();
+        this.amount = input.getAmount();
+        this.currency = input.getCurrency();
+        this.description = input.getDescription();
+        this.commerciant = input.getCommerciant();
+        this.email = input.getEmail();
     }
 
     @Override

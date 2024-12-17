@@ -7,6 +7,7 @@ import org.poo.bank.accounts.AccountFactory;
 import org.poo.bank.accounts.AccountType;
 import org.poo.bank.Bank;
 import org.poo.bank.accounts.transactions.AccountCreated;
+import org.poo.fileio.CommandInput;
 
 class AddAccount extends Command {
     public static final String COMMAND = "addAccount";
@@ -16,12 +17,12 @@ class AddAccount extends Command {
     private final AccountType accountType;
     private final double interestRate;
 
-    AddAccount(String email, String currency, String accountType, int timestamp, double interestRate) {
-        this.email = email;
-        this.currency = currency;
-        this.accountType = AccountType.fromString(accountType);
-        this.timestamp = timestamp;
-        this.interestRate = interestRate;
+    AddAccount(CommandInput input) {
+        super(input);
+        this.email = input.getEmail();
+        this.currency = input.getCurrency();
+        this.accountType = AccountType.fromString(input.getAccountType());
+        this.interestRate = input.getInterestRate();
     }
 
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {

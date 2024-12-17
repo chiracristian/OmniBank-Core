@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.bank.User;
+import org.poo.fileio.CommandInput;
 
 class PrintUsers extends Command {
     public static final String COMMAND = "printUsers";
 
-    PrintUsers(int timestamp) {
-        this.timestamp = timestamp;
+    PrintUsers(CommandInput input) {
+        super(input);
     }
 
     @Override
