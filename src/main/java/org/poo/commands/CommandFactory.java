@@ -23,7 +23,7 @@ public class CommandFactory {
             case DeleteAccount.COMMAND -> new DeleteAccount(input.getAccount(), input.getTimestamp(),
                     input.getEmail());
 
-            case DeleteCard.COMMAND -> new DeleteCard(input.getCardNumber(), input.getTimestamp());
+            case DeleteCard.COMMAND -> new DeleteCard(input.getEmail(), input.getCardNumber(), input.getTimestamp());
 
             case SetMinBalance.COMMAND -> new SetMinBalance(input.getAmount(), input.getAccount(),
                     input.getTimestamp());
@@ -32,7 +32,12 @@ public class CommandFactory {
                     input.getTimestamp(), input.getCommerciant(), input.getDescription(), input.getEmail());
 
             case SendMoney.COMMAND -> new SendMoney(input.getAccount(), input.getAmount(), input.getReceiver(),
-                    input.getTimestamp(), input.getDescription());
+                    input.getTimestamp(), input.getEmail(), input.getDescription());
+
+            case PrintTransactions.COMMAND -> new PrintTransactions(input.getTimestamp(), input.getEmail());
+
+            case SetAlias.COMMAND -> new SetAlias(input.getEmail(), input.getAccount(), input.getAlias(),
+                    input.getTimestamp());
 
             default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
         };

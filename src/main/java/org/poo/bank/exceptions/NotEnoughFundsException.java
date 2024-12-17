@@ -1,4 +1,6 @@
-package org.poo.bank.accounts;
+package org.poo.bank.exceptions;
+
+import org.poo.bank.accounts.Account;
 
 public class NotEnoughFundsException extends RuntimeException {
     public NotEnoughFundsException(Account account) {

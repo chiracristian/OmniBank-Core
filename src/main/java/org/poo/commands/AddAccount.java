@@ -6,6 +6,7 @@ import org.poo.bank.accounts.Account;
 import org.poo.bank.accounts.AccountFactory;
 import org.poo.bank.accounts.AccountType;
 import org.poo.bank.Bank;
+import org.poo.bank.accounts.transactions.AccountCreated;
 
 class AddAccount extends Command {
     public static final String COMMAND = "addAccount";
@@ -26,11 +27,12 @@ class AddAccount extends Command {
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
         Account addedAccount;
         switch (accountType) {
-            case CLASSIC -> addedAccount = AccountFactory.createClassicAccount(currency);
-            case SAVINGS -> addedAccount = AccountFactory.createSavingsAccount(currency, interestRate);
+            case CLASSIC -> addedAccount = AccountFactory.createClassicAccount(email, currency);
+            case SAVINGS -> addedAccount = AccountFactory.createSavingsAccount(email, currency, interestRate);
             default -> throw new IllegalArgumentException("There are no accounts of type " + accountType.getString());
         }
         bank.addAccount(addedAccount, email);
+        bank.getUsers().get(email).addTransaction(new AccountCreated(timestamp));
         return null;
     }
 }

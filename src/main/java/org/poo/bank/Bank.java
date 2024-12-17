@@ -2,6 +2,8 @@ package org.poo.bank;
 
 import lombok.Getter;
 import org.poo.bank.accounts.Account;
+import org.poo.bank.accounts.transactions.*;
+import org.poo.bank.exceptions.*;
 import org.poo.fileio.CommerciantInput;
 import org.poo.fileio.ObjectInput;
 import org.poo.fileio.UserInput;
@@ -23,6 +25,11 @@ public class Bank {
     private final HashMap<String, Account> accounts;
 
     /**
+     * Keys: aliases, Value: IBANs
+     */
+    private final HashMap<String, String> aliases;
+
+    /**
      * Cards, referenced by their number
      */
     private final HashMap<String, Card> cards;
@@ -39,6 +46,7 @@ public class Bank {
         }
 
         accounts = new HashMap<>();
+        aliases = new HashMap<>();
         cards = new HashMap<>();
         commerciants = new ArrayList<>();
 
@@ -51,16 +59,26 @@ public class Bank {
         currencyManager = new CurrencyManager(input.getExchangeRates());
     }
 
-    private Account getAccountRef(String iban, String email) {
-        Account refAccount = accounts.get(iban);
-        if (refAccount == null) {
-            throw new IllegalArgumentException("Account " + iban + " doesn't exist!");
+    private Account getAccountByIban(String iban) {
+        Account result = accounts.get(iban);
+        if (result == null) {
+            throw new NonExistingIbanException(iban);
         }
-        if (!users.get(email).getAccounts().contains(refAccount)) {
-            throw new IllegalArgumentException("Email of account " + iban + " is not " + email);
-        }
+        return result;
+    }
 
-        return refAccount;
+    private Account getAccountByAliasOrIban(String aliasOrIban) {
+        Account result = accounts.get(aliases.get(aliasOrIban));
+        if (result == null) {
+            return getAccountByIban(aliasOrIban);
+        }
+        return result;
+    }
+
+    private void checkEmailAccountMatch(Account account, String email) {
+        if (!account.getOwnerEmail().equals(email)){
+            throw new AccountEmailMismatchException(email, account.getIban());
+        }
     }
 
     public void addAccount(Account addedAccount, String ownerEmail) {
@@ -69,54 +87,104 @@ public class Bank {
     }
 
     public void deleteAccount(String iban, String email) {
-        Account accountToDel = getAccountRef(iban, email);
+        Account accountToDel = getAccountByIban(iban);
+        checkEmailAccountMatch(accountToDel, email);
 
         if (accountToDel.getBalance() != 0.0) {
-            throw new IllegalArgumentException("Account " + accountToDel + " still has funds.");
+            throw new NotZeroFundsException(accountToDel);
         }
         users.get(email).getAccounts().remove(accountToDel);
         accounts.remove(iban);
     }
 
-    public void createCard(String iban, String email, boolean oneTimeUse) {
-        Account refAccount = getAccountRef(iban, email);
+    public Card createCard(String iban, String email, boolean oneTimeUse) {
+        Account refAccount = getAccountByIban(iban);
+        checkEmailAccountMatch(refAccount, email);
+
         Card createdCard = new Card(refAccount, oneTimeUse);
+        //System.out.println("Created card " + createdCard.getNumber() + " one time? " + createdCard.isOneTimeUse());
 
         refAccount.addCard(createdCard);
         cards.put(createdCard.getNumber(), createdCard);
+
+        return createdCard;
     }
 
-    public void deleteCard(String cardNumber) {
+    public void deleteCard(String email, String cardNumber, int timestamp) {
         Card cardToDel = cards.get(cardNumber);
+        //System.out.println("Attempting to delete " + cardNumber);
         if (cardToDel == null) {
+            //System.out.println("Doesn't exist\n");
             throw new NonExistingCardException(cardNumber);
         }
 
+        Account refAccount = getAccountByIban(cardToDel.getAssociatedAccount().getIban());
+        checkEmailAccountMatch(refAccount, email);
+
+        Transaction destroyedTransaction = new CardDestroyed(timestamp, cardNumber, email, refAccount.getIban());
+        users.get(refAccount.getOwnerEmail()).addTransaction(destroyedTransaction);
+
+        cards.remove(cardToDel.getNumber());
         cardToDel.getAssociatedAccount().deleteCard(cardToDel);
-        cards.remove(cardNumber);
     }
 
-    public void payOnline(String cardNumber, double amount, String currency, String description,
-                          String commerciant, String email) {
+    private boolean decreaseFundsSafely(Account account, double amount, int timestamp) {
+        try {
+            account.decreaseFunds(amount);
+            return true;
+        } catch (NotEnoughFundsException notEnoughFunds) {
+            Transaction insufficientFundsTransaction = new InsufficientFunds(timestamp);
+            users.get(account.getOwnerEmail()).addTransaction(insufficientFundsTransaction);
+            return false;
+        }
+    }
+
+    public void payOnline(String cardNumber, double amount, String currency, int timestamp,
+                          String description, String commerciant, String email) {
         Card cardUsed = cards.get(cardNumber);
         if (cardUsed == null) {
+            //System.out.println("Doesn't exist card " + cardNumber + "\n");
             throw new NonExistingCardException(cardNumber);
         }
-        Account refAccount = getAccountRef(cardUsed.getAssociatedAccount().getIban(), email);
+        //System.out.println("Paying with card " + cardNumber + " one time? " + cardUsed.isOneTimeUse() + "\n");
+        Account refAccount = getAccountByIban(cardUsed.getAssociatedAccount().getIban());
+        checkEmailAccountMatch(refAccount, email);
 
-        refAccount.decreaseFunds(currencyManager.convert(amount, currency, refAccount.getCurrency()));
+        double convertedAmount = currencyManager.convert(amount, currency, refAccount.getCurrency());
+        if (!decreaseFundsSafely(refAccount, convertedAmount, timestamp)) {
+            return;
+        }
 
         if (cardUsed.isOneTimeUse()) {
-            refAccount.deleteCard(cardUsed);
+            //deleteCard(cardNumber);
             createCard(refAccount.getIban(), email, true);
         }
+
+        Transaction successTransaction = new CardPayment(timestamp, convertedAmount, commerciant);
+        users.get(refAccount.getOwnerEmail()).addTransaction(successTransaction);
     }
 
-    public void sendMoney(String fromIban, double amount, String toIban, String description) {
-        Account fromAccount = accounts.get(fromIban);
-        Account toAccount = accounts.get(toIban);
+    public void setAlias(String email, String iban, String alias) {
+        Account accountRef = getAccountByIban(iban);
+        checkEmailAccountMatch(accountRef, email);
 
-        fromAccount.decreaseFunds(amount);
+        aliases.put(alias, iban);
+    }
+
+    public void sendMoney(String fromIban, double amount, String toAliasOrIban, int timestamp,
+                          String email, String description) {
+        Account fromAccount = getAccountByIban(fromIban);
+        checkEmailAccountMatch(fromAccount, email);
+
+        Account toAccount = getAccountByAliasOrIban(toAliasOrIban);
+
+        if (!decreaseFundsSafely(fromAccount, amount, timestamp)) {
+            return;
+        }
         toAccount.addFunds(currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency()));
+
+        Transaction successTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
+                amount, fromAccount.getCurrency());
+        users.get(fromAccount.getOwnerEmail()).addTransaction(successTransaction);
     }
 }

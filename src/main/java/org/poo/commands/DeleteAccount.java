@@ -18,13 +18,20 @@ class DeleteAccount extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.deleteAccount(account, email);
+
 
         ObjectNode result = mapper.createObjectNode();
         result.put("command", COMMAND);
 
         ObjectNode outputNode = mapper.createObjectNode();
-        outputNode.put("success", "Account deleted");
+
+        try {
+            bank.deleteAccount(account, email);
+            outputNode.put("success", "Account deleted");
+        } catch (Exception e) {
+            outputNode.put("error", "Account couldn't be deleted - see org.poo.transactions for details");
+        }
+
         outputNode.put("timestamp", timestamp);
 
         result.set("output", outputNode);

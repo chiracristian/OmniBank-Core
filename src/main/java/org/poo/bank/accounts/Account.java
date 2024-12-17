@@ -6,26 +6,29 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
 import org.poo.bank.Card;
+import org.poo.bank.exceptions.NotEnoughFundsException;
 import org.poo.utils.Utils;
 
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 
 @Getter
 public class Account {
     private final String iban;
     private double balance;
+    private final String ownerEmail;
     private final String currency;
-    private final ArrayList<Card> cards;
+    private final LinkedHashSet<Card> cards;
 
     @Setter
     private double minimumBalance;
 
-    public Account(String currency) {
+    public Account(String ownerEmail, String currency) {
         this.iban = Utils.generateIBAN();
         this.balance = 0.0;
+        this.ownerEmail = ownerEmail;
         this.currency = currency;
-        this.cards = new ArrayList<>();
 
+        this.cards = new LinkedHashSet<>();
         this.minimumBalance = 0;
     }
 
@@ -48,13 +51,17 @@ public class Account {
         cards.remove(card);
     }
 
+    public String getType() {
+        return AccountType.CLASSIC.getString();
+    }
+
     public ObjectNode toJSON(ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("IBAN", iban);
         result.put("balance", balance);
         result.put("currency", currency);
-        result.put("type", AccountType.CLASSIC.getString());
+        result.put("type", getType());
 
         ArrayNode cardsNode = mapper.createArrayNode();
         for (Card card : cards) {

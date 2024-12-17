@@ -49,7 +49,7 @@ public class CommandManager {
             }
         }
 
-        System.out.println("Ended executing commands for test " + currentTest + "\n");
+        System.out.println("Ended executing commands for test " + currentTest + "----------------------------\n");
 
         return result;
     }

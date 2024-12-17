@@ -8,16 +8,28 @@ import org.poo.utils.Utils;
 
 @Getter
 public class Card {
+    @Getter
+    public enum Status {
+        ACTIVE("active"),
+        WARNING("warning"),
+        FROZEN("frozen");
+
+        private final String string;
+
+        Status(String string) {
+            this.string = string;
+        }
+    }
     private final String number;
     private final Account associatedAccount;
-
-    private CardStatus status;
+    private Status status;
     private final boolean oneTimeUse;
+
     public Card(Account associatedAccount, boolean oneTimeUse) {
         this.number = Utils.generateCardNumber();
         this.associatedAccount = associatedAccount;
 
-        this.status = CardStatus.ACTIVE;
+        this.status = Status.ACTIVE;
         this.oneTimeUse = oneTimeUse;
     }
 
