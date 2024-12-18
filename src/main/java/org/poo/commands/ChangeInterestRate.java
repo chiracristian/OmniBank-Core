@@ -18,7 +18,7 @@ class ChangeInterestRate extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.getAccounts().get(account).changeInterestRate(interestRate, timestamp);
+        bank.getAccountByIban(account).changeInterestRate(interestRate, timestamp);
 
         return null;
     }

@@ -11,12 +11,13 @@ import org.poo.fileio.UserInput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
-@Getter
 public class Bank {
     /**
      * Users, referenced by their email
      */
+    @Getter
     private final LinkedHashMap<String, User> users;
 
     /**
@@ -59,7 +60,19 @@ public class Bank {
         currencyManager = new CurrencyManager(input.getExchangeRates());
     }
 
-    private Account getAccountByIban(String iban) {
+    public User getUserByEmail(String email) {
+        User result = users.get(email);
+        if (result == null) {
+            throw new NonExistingUserException(email);
+        }
+        return result;
+    }
+
+    public User getUserByAccount(Account account) {
+        return getUserByEmail(account.getOwnerEmail());
+    }
+
+    public Account getAccountByIban(String iban) {
         Account result = accounts.get(iban);
         if (result == null) {
             throw new NonExistingIbanException(iban);
@@ -93,7 +106,7 @@ public class Bank {
         if (accountToDel.getBalance() != 0.0) {
             throw new NotZeroFundsException(accountToDel);
         }
-        users.get(email).getAccounts().remove(accountToDel);
+        getUserByEmail(email).getAccounts().remove(accountToDel);
         accounts.remove(iban);
     }
 
@@ -102,7 +115,6 @@ public class Bank {
         checkEmailAccountMatch(refAccount, email);
 
         Card createdCard = new Card(refAccount, oneTimeUse);
-        //System.out.println("Created card " + createdCard.getNumber() + " one time? " + createdCard.isOneTimeUse());
 
         refAccount.addCard(createdCard);
         cards.put(createdCard.getNumber(), createdCard);
@@ -112,9 +124,7 @@ public class Bank {
 
     public void deleteCard(String email, String cardNumber, int timestamp) {
         Card cardToDel = cards.get(cardNumber);
-        //System.out.println("Attempting to delete " + cardNumber);
         if (cardToDel == null) {
-            //System.out.println("Doesn't exist\n");
             throw new NonExistingCardException(cardNumber);
         }
 
@@ -122,20 +132,10 @@ public class Bank {
         checkEmailAccountMatch(refAccount, email);
 
         Transaction destroyedTransaction = new CardDestroyed(timestamp, cardNumber, email, refAccount.getIban());
-        users.get(refAccount.getOwnerEmail()).addTransaction(destroyedTransaction);
+        getUserByAccount(refAccount).addTransaction(destroyedTransaction);
 
         cards.remove(cardToDel.getNumber());
         cardToDel.getAssociatedAccount().deleteCard(cardToDel);
-    }
-
-    private void decreaseFundsSafely(Account account, double amount, int timestamp) {
-        try {
-            account.decreaseFunds(amount);
-        } catch (NotEnoughFundsException notEnoughFunds) {
-            Transaction insufficientFundsTransaction = new InsufficientFunds(timestamp);
-            users.get(account.getOwnerEmail()).addTransaction(insufficientFundsTransaction);
-            throw notEnoughFunds;
-        }
     }
 
     public void checkCardStatus(String cardNumber, int timestamp) {
@@ -148,36 +148,36 @@ public class Bank {
         Card.Status prevStatus = refCard.getStatus();
         refCard.updateStatus();
         if (prevStatus != refCard.getStatus()) {
-        if (refCard.getStatus() == Card.Status.FROZEN) {
-            Transaction reachedMinimum = new ReachedMinimumFunds(timestamp);
-            users.get(refAccount.getOwnerEmail()).addTransaction(reachedMinimum);
+            if (refCard.getStatus() == Card.Status.FROZEN) {
+                Transaction reachedMinimum = new ReachedMinimumFunds(timestamp);
+                getUserByAccount(refAccount).addTransaction(reachedMinimum);
+            }
         }
-        }
-        //System.out.println("Card status became " + status.getString() + " T=" + timestamp);
     }
 
     public void payOnline(String cardNumber, double amount, String currency, int timestamp,
                           String commerciant, String email) {
         Card cardUsed = cards.get(cardNumber);
         if (cardUsed == null) {
-            //System.out.println("Doesn't exist card " + cardNumber + "\n");
             throw new NonExistingCardException(cardNumber);
         }
 
-        //System.out.println("Paying with card " + cardNumber + " one time? " + cardUsed.isOneTimeUse() + "\n");
         Account refAccount = getAccountByIban(cardUsed.getAssociatedAccount().getIban());
         checkEmailAccountMatch(refAccount, email);
 
         if (cardUsed.getStatus() == Card.Status.FROZEN) {
             Transaction frozenCardTransaction = new CardIsFrozen(timestamp);
-            users.get(email).addTransaction(frozenCardTransaction);
+            getUserByEmail(email).addTransaction(frozenCardTransaction);
             return;
         }
 
         double convertedAmount = currencyManager.convert(amount, currency, refAccount.getCurrency());
-        try {
-            decreaseFundsSafely(refAccount, convertedAmount, timestamp);
-        } catch (NotEnoughFundsException notEnoughFunds) {
+
+        if (refAccount.ableToPaySum(convertedAmount)) {
+            refAccount.decreaseFunds(convertedAmount);
+        } else {
+            Transaction insufficientFundsTransaction = new InsufficientFunds(timestamp);
+            getUserByEmail(email).addTransaction(insufficientFundsTransaction);
             return;
         }
 
@@ -189,7 +189,7 @@ public class Bank {
         }
 
         Transaction successTransaction = new CardPayment(timestamp, convertedAmount, commerciant);
-        users.get(email).addTransaction(successTransaction);
+        getUserByEmail(email).addTransaction(successTransaction);
     }
 
     public void setAlias(String email, String iban, String alias) {
@@ -206,15 +206,53 @@ public class Bank {
 
         Account toAccount = getAccountByAliasOrIban(toAliasOrIban);
 
-        try {
-            decreaseFundsSafely(fromAccount, amount, timestamp);
-        } catch (NotEnoughFundsException notEnoughFunds) {
+        if (fromAccount.ableToPaySum(amount)) {
+            fromAccount.decreaseFunds(amount);
+        } else {
+            Transaction insufficientFundsTransaction = new InsufficientFunds(timestamp);
+            getUserByEmail(email).addTransaction(insufficientFundsTransaction);
             return;
         }
         toAccount.addFunds(currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency()));
 
         Transaction successTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
                 amount, fromAccount.getCurrency());
-        users.get(fromAccount.getOwnerEmail()).addTransaction(successTransaction);
+        getUserByAccount(fromAccount).addTransaction(successTransaction);
+    }
+
+    public void splitPayment(List<String> ibanList, int timestamp, String currency, double amount) {
+        ArrayList<Account> fromAccounts = new ArrayList<>(ibanList.size());
+        for (String currentIban : ibanList) {
+            fromAccounts.add(getAccountByIban(currentIban));
+        }
+
+        double amountPerPerson = amount / fromAccounts.size();
+        ArrayList<Double> sumsPaid = new ArrayList<>(fromAccounts.size());
+
+        Account accountWithInsufficientFunds = null;
+        for (Account account : fromAccounts) {
+            double convertedAmount = currencyManager.convert(amountPerPerson, currency, account.getCurrency());
+
+            if (!account.ableToPaySum(convertedAmount)) {
+                accountWithInsufficientFunds = account;
+            }
+            sumsPaid.add(convertedAmount);
+        }
+
+        if (accountWithInsufficientFunds == null) {
+            for (int i = 0; i < fromAccounts.size(); i++) {
+                fromAccounts.get(i).decreaseFunds(sumsPaid.get(i));
+
+                Transaction splitPayment = new SplitPayment(timestamp, currency, amountPerPerson,
+                        amount, ibanList);
+                getUserByAccount(fromAccounts.get(i)).addTransaction(splitPayment);
+            }
+        } else {
+            for (Account fromAccount : fromAccounts) {
+                Transaction splitPayment = new SplitPayment(timestamp, currency, amountPerPerson,
+                        amount, ibanList, accountWithInsufficientFunds.getIban());
+                getUserByAccount(fromAccount).addTransaction(splitPayment);
+            }
+        }
     }
 }

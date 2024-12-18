@@ -33,7 +33,7 @@ class AddAccount extends Command {
             default -> throw new IllegalArgumentException("There are no accounts of type " + accountType.getString());
         }
         bank.addAccount(addedAccount, email);
-        bank.getUsers().get(email).addTransaction(new AccountCreated(timestamp));
+        bank.getUserByEmail(email).addTransaction(new AccountCreated(timestamp));
         return null;
     }
 }

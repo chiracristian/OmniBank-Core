@@ -33,14 +33,21 @@ public class Account {
     }
 
     public void addFunds(double amount) {
+        //System.out.println("Added " + amount + " " + currency + " to " + iban);
         balance += amount;
     }
 
+    public boolean ableToPaySum(double amount) {
+        return balance >= amount;
+    }
+
     public void decreaseFunds(double amount) {
-        if (balance < amount) {
+        if (ableToPaySum(amount)) {
+            //System.out.println("Subtracted " + amount + " " + currency + " from " + iban);
+            balance -= amount;
+        } else {
             throw new NotEnoughFundsException(this);
         }
-        balance -= amount;
     }
 
     public void addCard(Card card) {

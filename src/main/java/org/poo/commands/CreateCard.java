@@ -32,7 +32,7 @@ public class CreateCard extends Command {
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
         Card createdCard = bank.createCard(account, email, oneTimeUse);
-        bank.getUsers().get(email).addTransaction(new CardCreated(timestamp, createdCard.getNumber(), email, account));
+        bank.getUserByEmail(email).addTransaction(new CardCreated(timestamp, createdCard.getNumber(), email, account));
         return null;
     }
 }

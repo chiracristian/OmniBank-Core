@@ -22,7 +22,7 @@ class PrintTransactions extends Command {
 
         result.put("command", COMMAND);
 
-        ArrayNode outputNode = bank.getUsers().get(email).getTransactionsAsJSON(mapper);
+        ArrayNode outputNode = bank.getUserByEmail(email).getTransactionsAsJSON(mapper);
         result.set("output", outputNode);
 
         result.put("timestamp", timestamp);

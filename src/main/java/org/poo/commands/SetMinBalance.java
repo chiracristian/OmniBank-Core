@@ -18,7 +18,7 @@ class SetMinBalance extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.getAccounts().get(account).setMinimumBalance(amount);
+        bank.getAccountByIban(account).setMinimumBalance(amount);
         return null;
     }
 }

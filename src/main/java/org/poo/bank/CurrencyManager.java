@@ -34,6 +34,9 @@ public class CurrencyManager {
     }
 
     public double convert(double amountToExchange, String from, String to) {
+        if (from.equals(to)) {
+            return amountToExchange;
+        }
         List<Double> conversionRates = conversionPaths.getPath(from, to).getEdgeList();
 
         double result = amountToExchange;

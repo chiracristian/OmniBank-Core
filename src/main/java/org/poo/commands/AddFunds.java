@@ -19,7 +19,7 @@ public class AddFunds extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.getAccounts().get(account).addFunds(amount);
+        bank.getAccountByIban(account).addFunds(amount);
         return null;
     }
 }
