@@ -94,9 +94,12 @@ public class Bank {
         }
     }
 
-    public void addAccount(Account addedAccount, String ownerEmail) {
+    public void addAccount(Account addedAccount, String ownerEmail, int timestamp) {
         accounts.put(addedAccount.getIban(), addedAccount);
-        users.get(ownerEmail).addAccount(addedAccount);
+        getUserByEmail(ownerEmail).addAccount(addedAccount);
+
+        Transaction accountCreated = new AccountCreated(timestamp);
+        addTransaction(addedAccount, accountCreated);
     }
 
     public void deleteAccount(String iban, String email) {
@@ -110,7 +113,12 @@ public class Bank {
         accounts.remove(iban);
     }
 
-    public Card createCard(String iban, String email, boolean oneTimeUse) {
+    public void addTransaction(Account account, Transaction transaction) {
+        account.addTransaction(transaction);
+        getUserByAccount(account).addTransaction(transaction);
+    }
+
+    public Card createCard(String iban, String email, boolean oneTimeUse, int timestamp) {
         Account refAccount = getAccountByIban(iban);
         checkEmailAccountMatch(refAccount, email);
 
@@ -118,6 +126,10 @@ public class Bank {
 
         refAccount.addCard(createdCard);
         cards.put(createdCard.getNumber(), createdCard);
+
+        //bank.getUserByEmail(email).addTransaction(new CardCreated(timestamp, createdCard.getNumber(), email, account));
+        Transaction createdCardTransaction = new CardCreated(timestamp, createdCard.getNumber(), email, iban);
+        addTransaction(refAccount, createdCardTransaction);
 
         return createdCard;
     }
@@ -132,7 +144,7 @@ public class Bank {
         checkEmailAccountMatch(refAccount, email);
 
         Transaction destroyedTransaction = new CardDestroyed(timestamp, cardNumber, email, refAccount.getIban());
-        getUserByAccount(refAccount).addTransaction(destroyedTransaction);
+        addTransaction(refAccount, destroyedTransaction);
 
         cards.remove(cardToDel.getNumber());
         cardToDel.getAssociatedAccount().deleteCard(cardToDel);
@@ -150,7 +162,7 @@ public class Bank {
         if (prevStatus != refCard.getStatus()) {
             if (refCard.getStatus() == Card.Status.FROZEN) {
                 Transaction reachedMinimum = new ReachedMinimumFunds(timestamp);
-                getUserByAccount(refAccount).addTransaction(reachedMinimum);
+                addTransaction(refAccount, reachedMinimum);
             }
         }
     }
@@ -167,7 +179,7 @@ public class Bank {
 
         if (cardUsed.getStatus() == Card.Status.FROZEN) {
             Transaction frozenCardTransaction = new CardIsFrozen(timestamp);
-            getUserByEmail(email).addTransaction(frozenCardTransaction);
+            addTransaction(refAccount, frozenCardTransaction);
             return;
         }
 
@@ -177,7 +189,7 @@ public class Bank {
             refAccount.decreaseFunds(convertedAmount);
         } else {
             Transaction insufficientFundsTransaction = new InsufficientFunds(timestamp);
-            getUserByEmail(email).addTransaction(insufficientFundsTransaction);
+            addTransaction(refAccount, insufficientFundsTransaction);
             return;
         }
 
@@ -185,11 +197,11 @@ public class Bank {
             cards.remove(cardUsed.getNumber());
             cardUsed.getAssociatedAccount().deleteCard(cardUsed);
 
-            createCard(refAccount.getIban(), email, true);
+            createCard(refAccount.getIban(), email, true, timestamp);
         }
 
         Transaction successTransaction = new CardPayment(timestamp, convertedAmount, commerciant);
-        getUserByEmail(email).addTransaction(successTransaction);
+        addTransaction(refAccount, successTransaction);
     }
 
     public void setAlias(String email, String iban, String alias) {
@@ -210,14 +222,14 @@ public class Bank {
             fromAccount.decreaseFunds(amount);
         } else {
             Transaction insufficientFundsTransaction = new InsufficientFunds(timestamp);
-            getUserByEmail(email).addTransaction(insufficientFundsTransaction);
+            addTransaction(fromAccount, insufficientFundsTransaction);
             return;
         }
         toAccount.addFunds(currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency()));
 
         Transaction successTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
                 amount, fromAccount.getCurrency());
-        getUserByAccount(fromAccount).addTransaction(successTransaction);
+        addTransaction(fromAccount, successTransaction);
     }
 
     public void splitPayment(List<String> ibanList, int timestamp, String currency, double amount) {
@@ -239,20 +251,17 @@ public class Bank {
             sumsPaid.add(convertedAmount);
         }
 
-        if (accountWithInsufficientFunds == null) {
-            for (int i = 0; i < fromAccounts.size(); i++) {
+        for (int i = 0; i < fromAccounts.size(); i++) {
+            SplitPayment splitPayment;
+            if (accountWithInsufficientFunds == null) {
                 fromAccounts.get(i).decreaseFunds(sumsPaid.get(i));
-
-                Transaction splitPayment = new SplitPayment(timestamp, currency, amountPerPerson,
+                splitPayment = new SplitPayment(timestamp, currency, amountPerPerson,
                         amount, ibanList);
-                getUserByAccount(fromAccounts.get(i)).addTransaction(splitPayment);
-            }
-        } else {
-            for (Account fromAccount : fromAccounts) {
-                Transaction splitPayment = new SplitPayment(timestamp, currency, amountPerPerson,
+            } else {
+                splitPayment = new SplitPayment(timestamp, currency, amountPerPerson,
                         amount, ibanList, accountWithInsufficientFunds.getIban());
-                getUserByAccount(fromAccount).addTransaction(splitPayment);
             }
+            addTransaction(fromAccounts.get(i), splitPayment);
         }
     }
 }

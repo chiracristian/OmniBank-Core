@@ -7,8 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 import java.util.Locale;
 
-public class SplitPayment implements Transaction {
-    private final int timestamp;
+public class SplitPayment extends Transaction {
     private final String currency;
     private final double amountPaid;
     private final List<String> involvedAccounts;
@@ -23,7 +22,7 @@ public class SplitPayment implements Transaction {
 
     public SplitPayment(int timestamp, String currency, double amountPaid, double totalAmount,
                         List<String> involvedAccounts, String accountWithNotEnough) {
-        this.timestamp = timestamp;
+        super(timestamp);
         this.currency = currency;
         this.amountPaid = amountPaid;
         this.involvedAccounts = involvedAccounts;

@@ -3,8 +3,6 @@ package org.poo.commands;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
-import org.poo.bank.accounts.transactions.CardCreated;
-import org.poo.bank.Card;
 import org.poo.fileio.CommandInput;
 
 public class CreateCard extends Command {
@@ -31,8 +29,7 @@ public class CreateCard extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        Card createdCard = bank.createCard(account, email, oneTimeUse);
-        bank.getUserByEmail(email).addTransaction(new CardCreated(timestamp, createdCard.getNumber(), email, account));
+        bank.createCard(account, email, oneTimeUse, timestamp);
         return null;
     }
 }

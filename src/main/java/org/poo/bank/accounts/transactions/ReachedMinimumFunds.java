@@ -3,11 +3,9 @@ package org.poo.bank.accounts.transactions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class ReachedMinimumFunds implements Transaction {
-    private final int timestamp;
-
+public class ReachedMinimumFunds extends Transaction {
     public ReachedMinimumFunds(int timestamp) {
-        this.timestamp = timestamp;
+        super(timestamp);
     }
 
     @Override

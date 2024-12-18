@@ -3,14 +3,13 @@ package org.poo.bank.accounts.transactions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class CardDestroyed implements Transaction {
-    private final int timestamp;
+public class CardDestroyed extends Transaction {
     private final String card;
     private final String cardHolder;
     private final String account;
 
     public CardDestroyed(int timestamp, String card, String cardHolder, String account) {
-        this.timestamp = timestamp;
+        super(timestamp);
         this.card = card;
         this.cardHolder = cardHolder;
         this.account = account;

@@ -6,10 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
 import org.poo.bank.Card;
+import org.poo.bank.accounts.transactions.Transaction;
 import org.poo.bank.exceptions.NotEnoughFundsException;
 import org.poo.utils.Utils;
 
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 
 @Getter
 public class Account {
@@ -17,7 +18,8 @@ public class Account {
     private double balance;
     private final String ownerEmail;
     private final String currency;
-    private final LinkedHashSet<Card> cards;
+    private final ArrayList<Card> cards;
+    private final ArrayList<Transaction> transactions;
 
     @Setter
     private double minimumBalance;
@@ -28,7 +30,8 @@ public class Account {
         this.ownerEmail = ownerEmail;
         this.currency = currency;
 
-        this.cards = new LinkedHashSet<>();
+        this.cards = new ArrayList<>();
+        this.transactions = new ArrayList<>();
         this.minimumBalance = 0;
     }
 
@@ -48,6 +51,10 @@ public class Account {
         } else {
             throw new NotEnoughFundsException(this);
         }
+    }
+
+    public void addTransaction(Transaction transaction) {
+        transactions.add(transaction);
     }
 
     public void addCard(Card card) {

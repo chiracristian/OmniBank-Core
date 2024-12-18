@@ -3,8 +3,7 @@ package org.poo.bank.accounts.transactions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class TransferPayment implements Transaction {
-    private final int timestamp;
+public class TransferPayment extends Transaction {
     private final String description;
     private final String senderIban;
     private final String receiverIban;
@@ -13,7 +12,7 @@ public class TransferPayment implements Transaction {
 
     public TransferPayment(int timestamp, String description, String senderIban,
                            String receiverIban, double amount, String currency) {
-        this.timestamp = timestamp;
+        super(timestamp);
         this.description = description;
         this.senderIban = senderIban;
         this.receiverIban = receiverIban;

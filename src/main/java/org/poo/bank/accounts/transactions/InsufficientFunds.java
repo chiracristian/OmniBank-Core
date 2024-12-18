@@ -3,11 +3,9 @@ package org.poo.bank.accounts.transactions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class InsufficientFunds implements Transaction {
-    private final int timestamp;
-
+public class InsufficientFunds extends Transaction {
     public InsufficientFunds(int timestamp) {
-        this.timestamp = timestamp;
+        super(timestamp);
     }
 
     @Override
