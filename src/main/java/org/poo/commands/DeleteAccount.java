@@ -28,7 +28,7 @@ class DeleteAccount extends Command {
         ObjectNode outputNode = mapper.createObjectNode();
 
         try {
-            bank.deleteAccount(account, email);
+            bank.deleteAccount(account, email, timestamp);
             outputNode.put("success", "Account deleted");
         } catch (Exception e) {
             outputNode.put("error", "Account couldn't be deleted - see org.poo.transactions for details");

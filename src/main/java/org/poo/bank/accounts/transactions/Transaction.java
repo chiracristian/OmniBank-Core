@@ -12,6 +12,10 @@ abstract public class Transaction {
         this.timestamp = timestamp;
     }
 
+    public boolean displayedInSavingAccountsReports() {
+        return false;
+    }
+
     public boolean displayedInSpendingReports() {
         return false;
     }

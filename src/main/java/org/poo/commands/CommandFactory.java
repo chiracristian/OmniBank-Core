@@ -20,6 +20,7 @@ public class CommandFactory {
             case PrintTransactions.COMMAND -> new PrintTransactions(input);
             case SetAlias.COMMAND -> new SetAlias(input);
             case CheckCardStatus.COMMAND -> new CheckCardStatus(input);
+            case AddInterest.COMMAND -> new AddInterest(input);
             case ChangeInterestRate.COMMAND -> new ChangeInterestRate(input);
             case SplitPayment.COMMAND -> new SplitPayment(input);
             case Report.COMMAND -> new Report(input);

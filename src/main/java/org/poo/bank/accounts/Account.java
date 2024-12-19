@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.poo.bank.Card;
 import org.poo.bank.accounts.transactions.Transaction;
 import org.poo.bank.exceptions.NotEnoughFundsException;
+import org.poo.bank.exceptions.NotSavingsAccountException;
 import org.poo.utils.Utils;
 
 import java.util.ArrayList;
@@ -74,7 +75,6 @@ public class Account {
         if (!commerciants.containsKey(commerciant)) {
             commerciants.put(commerciant, new ArrayList<>());
         }
-        //commerciants.put(commerciant, new CommerciantPayments(amount, timestamp));
         commerciants.get(commerciant).add(new CommerciantPayments(amount, timestamp));
     }
 
@@ -90,7 +90,78 @@ public class Account {
         return AccountType.CLASSIC.getString();
     }
 
-    public void changeInterestRate(double interestRate, int timestamp) { }
+    public double addInterest() {
+        throw new NotSavingsAccountException(this);
+    }
+
+    public void changeInterestRate(double interestRate) {
+        throw new NotSavingsAccountException(this);
+    }
+
+    public ObjectNode getReport(ObjectMapper mapper, int startTimestamp, int endTimestamp) {
+        ObjectNode outputNode = mapper.createObjectNode();
+
+        outputNode.put("IBAN", iban);
+        outputNode.put("balance", balance);
+        outputNode.put("currency", currency);
+
+        ArrayNode transactionsNode = mapper.createArrayNode();
+        for (Transaction transaction : transactions) {
+            if (transaction.getTimestamp() < startTimestamp) {
+                continue;
+            } else if (transaction.getTimestamp() > endTimestamp) {
+                break;
+            }
+            transactionsNode.add(transaction.toJson(mapper));
+        }
+        outputNode.set("transactions", transactionsNode);
+
+        return outputNode;
+    }
+
+    public ObjectNode getSpendingReport(ObjectMapper mapper, int startTimestamp, int endTimestamp) {
+        ObjectNode outputNode = mapper.createObjectNode();
+
+        outputNode.put("IBAN", iban);
+        outputNode.put("balance", balance);
+        outputNode.put("currency", currency);
+
+        ArrayNode transactionsNode = mapper.createArrayNode();
+        for (Transaction transaction : transactions) {
+            if (transaction.getTimestamp() < startTimestamp) {
+                continue;
+            } else if (transaction.getTimestamp() > endTimestamp) {
+                break;
+            }
+            if (transaction.displayedInSpendingReports()) {
+                transactionsNode.add(transaction.toJson(mapper));
+            }
+        }
+        outputNode.set("transactions", transactionsNode);
+
+        ArrayNode commerciantsNode = mapper.createArrayNode();
+        for (String commerciant : commerciants.keySet()) {
+            double totalAmount = 0.0;
+            for (Account.CommerciantPayments currentPayment : commerciants.get(commerciant)) {
+                if (currentPayment.getTimestamp() < startTimestamp) {
+                    continue;
+                } else if (currentPayment.getTimestamp() > endTimestamp) {
+                    break;
+                }
+                totalAmount += currentPayment.getAmount();
+            }
+            if (totalAmount != 0.0) {
+                ObjectNode currentNode = mapper.createObjectNode();
+                currentNode.put("commerciant", commerciant);
+                currentNode.put("total", totalAmount);
+
+                commerciantsNode.add(currentNode);
+            }
+        }
+        outputNode.set("commerciants", commerciantsNode);
+
+        return outputNode;
+    }
 
     public ObjectNode toJSON(ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();

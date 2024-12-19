@@ -1,11 +1,10 @@
 package org.poo.commands;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.bank.accounts.Account;
-import org.poo.bank.accounts.transactions.Transaction;
+import org.poo.bank.exceptions.NonExistingIbanException;
 import org.poo.fileio.CommandInput;
 
 class Report extends Command {
@@ -27,24 +26,22 @@ class Report extends Command {
 
         result.put("command", COMMAND);
 
-        Account refAccount = bank.getAccountByIban(account);
+        ObjectNode outputNode;
+        Account refAccount;
+        try {
+            refAccount = bank.getAccountByIban(account);
+        } catch (NonExistingIbanException nonExistingIbanException) {
+            outputNode = mapper.createObjectNode();
+            outputNode.put("timestamp", timestamp);
+            outputNode.put("description", "Account not found");
 
-        ObjectNode outputNode = mapper.createObjectNode();
-        outputNode.put("IBAN", account);
-        outputNode.put("balance", refAccount.getBalance());
-        outputNode.put("currency", refAccount.getCurrency());
+            result.set("output", outputNode);
+            result.put("timestamp", timestamp);
 
-        ArrayNode transactionsNode = mapper.createArrayNode();
-
-        for (Transaction transaction : refAccount.getTransactions()) {
-            if (transaction.getTimestamp() < startTimestamp) {
-                continue;
-            } else if (transaction.getTimestamp() > endTimestamp) {
-                break;
-            }
-            transactionsNode.add(transaction.toJson(mapper));
+            return result;
         }
-        outputNode.set("transactions", transactionsNode);
+
+        outputNode = refAccount.getReport(mapper, startTimestamp, endTimestamp);
         result.set("output", outputNode);
 
         result.put("timestamp", timestamp);

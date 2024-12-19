@@ -6,21 +6,20 @@ import org.poo.bank.Bank;
 import org.poo.bank.exceptions.NotSavingsAccountException;
 import org.poo.fileio.CommandInput;
 
-class ChangeInterestRate extends Command {
-    public static final String COMMAND = "changeInterestRate";
-    private final String account;
-    private final double interestRate;
+public class AddInterest extends Command {
+    public static final String COMMAND = "addInterest";
 
-    ChangeInterestRate(CommandInput input) {
+    private final String account;
+
+    public AddInterest(CommandInput input) {
         super(input);
         this.account = input.getAccount();
-        this.interestRate = input.getInterestRate();
     }
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
         try {
-            bank.changeInterestRate(account, interestRate, timestamp);
+            bank.addInterest(account, timestamp);
         } catch (NotSavingsAccountException notSavingsAccountException) {
             ObjectNode result = mapper.createObjectNode();
 

@@ -31,9 +31,6 @@ public class Bank {
      */
     private final HashMap<String, Card> cards;
 
-    //private final ArrayList<CommerciantCategory> commerciantCategories;
-    //private final TreeSet<String> commerciants;
-
     private final CurrencyManager currencyManager;
 
     public Bank(ObjectInput input) {
@@ -46,14 +43,6 @@ public class Bank {
         accounts = new HashMap<>();
         aliases = new HashMap<>();
         cards = new HashMap<>();
-        //commerciantCategories = new ArrayList<>();
-
-//        if (input.getCommerciants() != null) {
-//            for (CommerciantInput commIn : input.getCommerciants()) {
-//                commerciantCategories.add(new CommerciantCategory(commIn));
-//            }
-//        }
-        //commerciants = new TreeSet<>();
 
         currencyManager = new CurrencyManager(input.getExchangeRates());
     }
@@ -100,15 +89,33 @@ public class Bank {
         addTransaction(addedAccount, accountCreated);
     }
 
-    public void deleteAccount(String iban, String email) {
+    public void deleteAccount(String iban, String email, int timestamp) {
         Account accountToDel = getAccountByIban(iban);
         checkEmailAccountMatch(accountToDel, email);
 
         if (accountToDel.getBalance() != 0.0) {
+            Transaction deleteFail = new AccountDeleteFail(timestamp);
+            addTransaction(accountToDel, deleteFail);
             throw new NotZeroFundsException(accountToDel);
         }
         getUserByEmail(email).getAccounts().remove(accountToDel);
         accounts.remove(iban);
+    }
+
+    public void changeInterestRate(String iban, double interestRate, int timestamp) {
+        Account refAccount = getAccountByIban(iban);
+        refAccount.changeInterestRate(interestRate);
+
+        Transaction changedInterest = new ChangedInterestRate(timestamp, interestRate);
+        addTransaction(refAccount, changedInterest);
+    }
+
+    public void addInterest(String iban, int timestamp) {
+        Account refAccount = getAccountByIban(iban);
+        double addedAmount = refAccount.addInterest();
+
+        Transaction addedInterest = new AddedInterest(timestamp, addedAmount);
+        addTransaction(refAccount, addedInterest);
     }
 
     public void addTransaction(Account account, Transaction transaction) {
@@ -125,18 +132,22 @@ public class Bank {
         refAccount.addCard(createdCard);
         cards.put(createdCard.getNumber(), createdCard);
 
-        //bank.getUserByEmail(email).addTransaction(new CardCreated(timestamp, createdCard.getNumber(), email, account));
         Transaction createdCardTransaction = new CardCreated(timestamp, createdCard.getNumber(), email, iban);
         addTransaction(refAccount, createdCardTransaction);
 
         return createdCard;
     }
 
-    public void deleteCard(String email, String cardNumber, int timestamp) {
-        Card cardToDel = cards.get(cardNumber);
-        if (cardToDel == null) {
+    public Card getCard(String cardNumber) {
+        Card result = cards.get(cardNumber);
+        if (result == null) {
             throw new NonExistingCardException(cardNumber);
         }
+        return result;
+    }
+
+    public void deleteCard(String email, String cardNumber, int timestamp) {
+        Card cardToDel = getCard(cardNumber);
 
         Account refAccount = getAccountByIban(cardToDel.getAssociatedAccount().getIban());
         checkEmailAccountMatch(refAccount, email);
@@ -167,10 +178,7 @@ public class Bank {
 
     public void payOnline(String cardNumber, double amount, String currency, int timestamp,
                           String commerciant, String email) {
-        Card cardUsed = cards.get(cardNumber);
-        if (cardUsed == null) {
-            throw new NonExistingCardException(cardNumber);
-        }
+        Card cardUsed = getCard(cardNumber);
 
         Account refAccount = getAccountByIban(cardUsed.getAssociatedAccount().getIban());
         checkEmailAccountMatch(refAccount, email);
@@ -191,17 +199,15 @@ public class Bank {
             return;
         }
 
-        if (cardUsed.isOneTimeUse()) {
-            cards.remove(cardUsed.getNumber());
-            cardUsed.getAssociatedAccount().deleteCard(cardUsed);
-
-            createCard(refAccount.getIban(), email, true, timestamp);
-        }
-
         refAccount.addCommerciant(commerciant, convertedAmount, timestamp);
 
         Transaction successTransaction = new CardPayment(timestamp, convertedAmount, commerciant);
         addTransaction(refAccount, successTransaction);
+
+        if (cardUsed.isOneTimeUse()) {
+            deleteCard(email, cardNumber, timestamp);
+            createCard(refAccount.getIban(), email, true, timestamp);
+        }
     }
 
     public void setAlias(String email, String iban, String alias) {
@@ -225,11 +231,16 @@ public class Bank {
             addTransaction(fromAccount, insufficientFundsTransaction);
             return;
         }
-        toAccount.addFunds(currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency()));
+        double convertedAmount = currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency());
+        toAccount.addFunds(convertedAmount);
 
-        Transaction successTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
-                amount, fromAccount.getCurrency());
-        addTransaction(fromAccount, successTransaction);
+        Transaction sentTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
+                amount, fromAccount.getCurrency(), TransferPayment.Type.SENT);
+        addTransaction(fromAccount, sentTransaction);
+
+        Transaction receivedTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
+                convertedAmount, toAccount.getCurrency(), TransferPayment.Type.RECEIVED);
+        addTransaction(toAccount, receivedTransaction);
     }
 
     public void splitPayment(List<String> ibanList, int timestamp, String currency, double amount) {

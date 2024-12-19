@@ -3,6 +3,7 @@ package org.poo.commands;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
+import org.poo.bank.exceptions.NonExistingCardException;
 import org.poo.fileio.CommandInput;
 
 class DeleteCard extends Command {
@@ -20,7 +21,11 @@ class DeleteCard extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.deleteCard(email, cardNumber, timestamp);
+        try {
+            bank.deleteCard(email, cardNumber, timestamp);
+        } catch (NonExistingCardException ignored) {
+
+        }
 
 //        ObjectNode result = mapper.createObjectNode();
 //        result.put("command", COMMAND);

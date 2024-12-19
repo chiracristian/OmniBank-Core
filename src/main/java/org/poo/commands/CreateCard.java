@@ -3,6 +3,7 @@ package org.poo.commands;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
+import org.poo.bank.exceptions.AccountEmailMismatchException;
 import org.poo.fileio.CommandInput;
 
 public class CreateCard extends Command {
@@ -29,7 +30,12 @@ public class CreateCard extends Command {
 
     @Override
     public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-        bank.createCard(account, email, oneTimeUse, timestamp);
+        try {
+            bank.createCard(account, email, oneTimeUse, timestamp);
+        } catch (AccountEmailMismatchException ignored) {
+
+        }
+
         return null;
     }
 }
