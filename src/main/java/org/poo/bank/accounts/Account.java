@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
 import org.poo.bank.Card;
-import org.poo.transactions.Transaction;
 import org.poo.exceptions.NotEnoughFundsException;
 import org.poo.exceptions.NotSavingsAccountException;
+import org.poo.transactions.Transaction;
 import org.poo.utils.Utils;
 
 import java.util.ArrayList;
