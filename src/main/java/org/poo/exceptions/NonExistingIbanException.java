@@ -1,7 +1,7 @@
-package org.poo.bank.exceptions;
+package org.poo.exceptions;
 
 public class NonExistingIbanException extends RuntimeException {
-    public NonExistingIbanException(String iban) {
+    public NonExistingIbanException(final String iban) {
         super("Account with IBAN " + iban + " doesn't exist");
     }
 }

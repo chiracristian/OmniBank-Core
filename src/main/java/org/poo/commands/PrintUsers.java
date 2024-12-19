@@ -7,15 +7,15 @@ import org.poo.bank.Bank;
 import org.poo.bank.User;
 import org.poo.fileio.CommandInput;
 
-class PrintUsers extends Command {
+final class PrintUsers extends Command {
     public static final String COMMAND = "printUsers";
 
-    PrintUsers(CommandInput input) {
+    PrintUsers(final CommandInput input) {
         super(input);
     }
 
     @Override
-    public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
+    public ObjectNode executeAndGetOutput(final Bank bank, final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("command", COMMAND);

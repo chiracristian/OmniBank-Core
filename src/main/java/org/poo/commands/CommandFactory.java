@@ -2,16 +2,16 @@ package org.poo.commands;
 
 import org.poo.fileio.CommandInput;
 
-public class CommandFactory {
+final class CommandFactory {
     private CommandFactory() { }
 
-    public static Command create(CommandInput input) {
+    public static Command create(final CommandInput input) {
         return switch (input.getCommand()) {
             case PrintUsers.COMMAND -> new PrintUsers(input);
             case AddAccount.COMMAND -> new AddAccount(input);
             case AddFunds.COMMAND -> new AddFunds(input);
             case CreateCard.COMMAND -> new CreateCard(input, false);
-            case CreateCard.COMMAND_ONE_TIME -> new CreateCard(input,true);
+            case CreateCard.COMMAND_ONE_TIME -> new CreateCard(input, true);
             case DeleteAccount.COMMAND -> new DeleteAccount(input);
             case DeleteCard.COMMAND -> new DeleteCard(input);
             case SetMinBalance.COMMAND -> new SetMinBalance(input);
@@ -26,7 +26,8 @@ public class CommandFactory {
             case Report.COMMAND -> new Report(input);
             case SpendingsReport.COMMAND -> new SpendingsReport(input);
 
-            default -> throw new IllegalArgumentException("Command not implemented: " + input.getCommand());
+            default -> throw new IllegalArgumentException("Command not implemented: "
+                    + input.getCommand());
         };
     }
 }

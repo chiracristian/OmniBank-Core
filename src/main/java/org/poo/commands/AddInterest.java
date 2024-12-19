@@ -3,21 +3,21 @@ package org.poo.commands;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
-import org.poo.bank.exceptions.NotSavingsAccountException;
+import org.poo.exceptions.NotSavingsAccountException;
 import org.poo.fileio.CommandInput;
 
-public class AddInterest extends Command {
+final class AddInterest extends Command {
     public static final String COMMAND = "addInterest";
 
     private final String account;
 
-    public AddInterest(CommandInput input) {
+    AddInterest(final CommandInput input) {
         super(input);
         this.account = input.getAccount();
     }
 
     @Override
-    public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
+    public ObjectNode executeAndGetOutput(final Bank bank, final ObjectMapper mapper) {
         try {
             bank.addInterest(account, timestamp);
         } catch (NotSavingsAccountException notSavingsAccountException) {

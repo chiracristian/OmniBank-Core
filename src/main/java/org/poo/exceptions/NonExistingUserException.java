@@ -1,7 +1,7 @@
-package org.poo.bank.exceptions;
+package org.poo.exceptions;
 
 public class NonExistingUserException extends RuntimeException {
-    public NonExistingUserException(String email) {
+    public NonExistingUserException(final String email) {
         super("User with email " + email + " doesn't exist");
     }
 }

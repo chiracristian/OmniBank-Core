@@ -5,23 +5,20 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.fileio.CommandInput;
 
-class DeleteAccount extends Command {
+final class DeleteAccount extends Command {
     public static final String COMMAND = "deleteAccount";
 
     private final String account;
     private final String email;
 
-    DeleteAccount(CommandInput input) {
+    DeleteAccount(final CommandInput input) {
         super(input);
         this.account = input.getAccount();
-        this.timestamp = input.getTimestamp();
         this.email = input.getEmail();
     }
 
     @Override
-    public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
-
-
+    public ObjectNode executeAndGetOutput(final Bank bank, final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
         result.put("command", COMMAND);
 
@@ -31,7 +28,8 @@ class DeleteAccount extends Command {
             bank.deleteAccount(account, email, timestamp);
             outputNode.put("success", "Account deleted");
         } catch (Exception e) {
-            outputNode.put("error", "Account couldn't be deleted - see org.poo.transactions for details");
+            outputNode.put("error",
+                    "Account couldn't be deleted - see org.poo.transactions for details");
         }
 
         outputNode.put("timestamp", timestamp);

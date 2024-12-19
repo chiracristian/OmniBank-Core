@@ -8,7 +8,7 @@ import org.poo.bank.accounts.Account;
 import org.poo.utils.Utils;
 
 @Getter
-public class Card {
+public final class Card {
     @Getter
     public enum Status {
         ACTIVE("active"),
@@ -18,7 +18,7 @@ public class Card {
         private final String string;
         public static final double WARNING_LIMIT = 30.0;
 
-        Status(String string) {
+        Status(final String string) {
             this.string = string;
         }
     }
@@ -29,7 +29,12 @@ public class Card {
     @Setter
     private Status status;
 
-    public Card(Account associatedAccount, boolean oneTimeUse) {
+    /**
+     * Construct a new card
+     * @param associatedAccount the account the card shall belong to
+     * @param oneTimeUse whether it is one time use or not
+     */
+    public Card(final Account associatedAccount, final boolean oneTimeUse) {
         this.number = Utils.generateCardNumber();
         this.associatedAccount = associatedAccount;
         this.oneTimeUse = oneTimeUse;
@@ -37,6 +42,9 @@ public class Card {
         this.status = Status.ACTIVE;
     }
 
+    /**
+     * Update the status of the card
+     */
     public void updateStatus() {
         double currentBalance = associatedAccount.getBalance();
         double minimumBalance = associatedAccount.getMinimumBalance();
@@ -50,7 +58,12 @@ public class Card {
         }
     }
 
-    public ObjectNode toJSON(ObjectMapper mapper) {
+    /**
+     * Get the data of the Card in JSON format
+     * @param mapper the ObjectMapper to use
+     * @return the data of the card, as an ObjectNode
+     */
+    public ObjectNode toJSON(final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("cardNumber", number);

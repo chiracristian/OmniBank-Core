@@ -4,16 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.bank.accounts.Account;
-import org.poo.bank.exceptions.NonExistingIbanException;
+import org.poo.exceptions.NonExistingIbanException;
 import org.poo.fileio.CommandInput;
 
-class Report extends Command {
+final class Report extends Command {
     public static final String COMMAND = "report";
     private final int startTimestamp;
     private final int endTimestamp;
     private final String account;
 
-    public Report(CommandInput input) {
+    Report(final CommandInput input) {
         super(input);
         this.startTimestamp = input.getStartTimestamp();
         this.endTimestamp = input.getEndTimestamp();
@@ -21,7 +21,7 @@ class Report extends Command {
     }
 
     @Override
-    public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
+    public ObjectNode executeAndGetOutput(final Bank bank, final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("command", COMMAND);

@@ -8,14 +8,19 @@ import org.poo.fileio.CommandInput;
 
 import java.util.ArrayList;
 
-public class CommandInvoker {
+public final class CommandInvoker {
     private final ArrayList<Command> commands;
     private final Bank refBank;
     private final ObjectMapper refMapper;
 
-    private static int currentTest = 0;
-
-    public CommandInvoker(CommandInput[] input, Bank refBank, ObjectMapper refMapper) {
+    /**
+     * Construct a command invoker
+     * @param input the entered commands
+     * @param refBank the referenced bank
+     * @param refMapper the objectMapper used for JSON output
+     */
+    public CommandInvoker(final CommandInput[] input, final Bank refBank,
+                          final ObjectMapper refMapper) {
         commands = new ArrayList<>(input.length);
         for (CommandInput cmdIn : input) {
             try {
@@ -27,20 +32,21 @@ public class CommandInvoker {
         }
         this.refBank = refBank;
         this.refMapper = refMapper;
-
-        currentTest++;
     }
 
+    /**
+     * Execute all the commands
+     * @return an ArrayNode with the output of the commands
+     */
     public ArrayNode executeAll() {
         ArrayNode result = refMapper.createArrayNode();
 
-        System.out.println("Started executing test " + currentTest);
         for (Command command : commands) {
             ObjectNode output;
             try {
                 output = command.executeAndGetOutput(refBank, refMapper);
-            } catch (Exception e) {
-                System.out.println(e.getMessage() + "\n");
+            } catch (Exception exception) {
+                System.out.println(exception.getMessage());
                 break;
             }
 
@@ -48,9 +54,6 @@ public class CommandInvoker {
                 result.add(output);
             }
         }
-
-        System.out.println("Ended executing commands for test " + currentTest);
-        System.out.println("--------------------------------------------------\n");
 
         return result;
     }

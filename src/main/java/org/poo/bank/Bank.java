@@ -2,38 +2,43 @@ package org.poo.bank;
 
 import lombok.Getter;
 import org.poo.bank.accounts.Account;
-import org.poo.bank.accounts.transactions.*;
-import org.poo.bank.exceptions.*;
+import org.poo.exceptions.AccountEmailMismatchException;
+
+import org.poo.exceptions.NonExistingIbanException;
+import org.poo.exceptions.NonExistingUserException;
+import org.poo.exceptions.NotZeroFundsException;
+import org.poo.exceptions.NonExistingCardException;
+
+import org.poo.transactions.*;
 import org.poo.fileio.ObjectInput;
 import org.poo.fileio.UserInput;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.List;
 
-public class Bank {
-    /**
-     * Users, referenced by their email
-     */
+public final class Bank {
+    // Users, referenced by their email
     @Getter
     private final LinkedHashMap<String, User> users;
 
-    /**
-     * Accounts, referenced by their IBAN
-     */
+    // Accounts, referenced by their IBAN
     private final HashMap<String, Account> accounts;
 
-    /**
-     * Keys: aliases, Value: IBANs
-     */
+    // IBANs, referenced by aliases
     private final HashMap<String, String> aliases;
 
-    /**
-     * Cards, referenced by their number
-     */
+    // Cards, referenced by their number
     private final HashMap<String, Card> cards;
 
-    private final CurrencyManager currencyManager;
+    private final CurrencyExchanger currencyExchanger;
 
-    public Bank(ObjectInput input) {
+    /**
+     * Construct a new bank
+     * @param input the input data
+     */
+    public Bank(final ObjectInput input) {
         users = new LinkedHashMap<>();
 
         for (UserInput userIn : input.getUsers()) {
@@ -44,10 +49,14 @@ public class Bank {
         aliases = new HashMap<>();
         cards = new HashMap<>();
 
-        currencyManager = new CurrencyManager(input.getExchangeRates());
+        currencyExchanger = new CurrencyExchanger(input.getExchangeRates());
     }
 
-    public User getUserByEmail(String email) {
+    /**
+     * @param email the email of the user
+     * @return the user that has the given email
+     */
+    public User getUserByEmail(final String email) {
         User result = users.get(email);
         if (result == null) {
             throw new NonExistingUserException(email);
@@ -55,11 +64,19 @@ public class Bank {
         return result;
     }
 
-    public User getUserByAccount(Account account) {
+    /**
+     * @param account the referenced account
+     * @return the user that owns the given account
+     */
+    public User getUserByAccount(final Account account) {
         return getUserByEmail(account.getOwnerEmail());
     }
 
-    public Account getAccountByIban(String iban) {
+    /**
+     * @param iban the IBAN of the account
+     * @return a reference to the Account that has the given IBAN
+     */
+    public Account getAccountByIban(final String iban) {
         Account result = accounts.get(iban);
         if (result == null) {
             throw new NonExistingIbanException(iban);
@@ -67,7 +84,11 @@ public class Bank {
         return result;
     }
 
-    private Account getAccountByAliasOrIban(String aliasOrIban) {
+    /**
+     * @param aliasOrIban the alias or the IBAN of the account
+     * @return a reference to the Account that has the given alias or IBAN
+     */
+    private Account getAccountByAliasOrIban(final String aliasOrIban) {
         Account result = accounts.get(aliases.get(aliasOrIban));
         if (result == null) {
             return getAccountByIban(aliasOrIban);
@@ -75,13 +96,26 @@ public class Bank {
         return result;
     }
 
-    private void checkEmailAccountMatch(Account account, String email) {
-        if (!account.getOwnerEmail().equals(email)){
+    /**
+     * Check if an account is owned by a user with the given email.
+     * Throw AccountEmailMismatchException in case of mismatch
+     * @param account the referenced account
+     * @param email the email that should own the account
+     */
+    private void checkEmailAccountMatch(final Account account, final String email) {
+        if (!account.getOwnerEmail().equals(email)) {
             throw new AccountEmailMismatchException(email, account.getIban());
         }
     }
 
-    public void addAccount(Account addedAccount, String ownerEmail, int timestamp) {
+    /**
+     * Add a new account
+     * @param addedAccount the added account
+     * @param ownerEmail the email of the owner
+     * @param timestamp the timestamp of the operation
+     */
+    public void addAccount(final Account addedAccount, final String ownerEmail,
+                           final int timestamp) {
         accounts.put(addedAccount.getIban(), addedAccount);
         getUserByEmail(ownerEmail).addAccount(addedAccount);
 
@@ -89,20 +123,36 @@ public class Bank {
         addTransaction(addedAccount, accountCreated);
     }
 
-    public void deleteAccount(String iban, String email, int timestamp) {
+    /**
+     * Delete an account. The account must have the balance equal zero, otherwise
+     * NotZeroFundsException will be thrown
+     * @param iban the IBAN of the account
+     * @param email the email of the owner
+     * @param timestamp the timestamp of the operation
+     */
+    public void deleteAccount(final String iban, final String email, final int timestamp) {
         Account accountToDel = getAccountByIban(iban);
         checkEmailAccountMatch(accountToDel, email);
 
         if (accountToDel.getBalance() != 0.0) {
             Transaction deleteFail = new AccountDeleteFail(timestamp);
             addTransaction(accountToDel, deleteFail);
+
             throw new NotZeroFundsException(accountToDel);
         }
+
         getUserByEmail(email).getAccounts().remove(accountToDel);
         accounts.remove(iban);
     }
 
-    public void changeInterestRate(String iban, double interestRate, int timestamp) {
+    /**
+     * Change the interest rate of an account
+     * @param iban the IBAN of the account
+     * @param interestRate the new interest rate
+     * @param timestamp the timestamp of the operation
+     */
+    public void changeInterestRate(final String iban, final double interestRate,
+                                   final int timestamp) {
         Account refAccount = getAccountByIban(iban);
         refAccount.changeInterestRate(interestRate);
 
@@ -110,7 +160,12 @@ public class Bank {
         addTransaction(refAccount, changedInterest);
     }
 
-    public void addInterest(String iban, int timestamp) {
+    /**
+     * Add interest to an account
+     * @param iban the IBAN of the account
+     * @param timestamp the timestamp of the operation
+     */
+    public void addInterest(final String iban, final int timestamp) {
         Account refAccount = getAccountByIban(iban);
         double addedAmount = refAccount.addInterest();
 
@@ -118,27 +173,46 @@ public class Bank {
         addTransaction(refAccount, addedInterest);
     }
 
-    public void addTransaction(Account account, Transaction transaction) {
+    /**
+     * Add a transaction to an account
+     * @param account the IBAN of the account
+     * @param transaction the transaction to add
+     */
+    public void addTransaction(final Account account, final Transaction transaction) {
         account.addTransaction(transaction);
         getUserByAccount(account).addTransaction(transaction);
     }
 
-    public Card createCard(String iban, String email, boolean oneTimeUse, int timestamp) {
+    /**
+     * Create a new card
+     * @param iban the IBAN of the account the card should belong to
+     * @param email the email of the owner of the account
+     * @param oneTimeUse whether the card is one-time use or not
+     * @param timestamp the timestamp of the operation
+     * @return a reference to the created Card
+     */
+    public Card createCard(final String iban, final String email,
+                           final boolean oneTimeUse, final int timestamp) {
         Account refAccount = getAccountByIban(iban);
         checkEmailAccountMatch(refAccount, email);
 
         Card createdCard = new Card(refAccount, oneTimeUse);
-
         refAccount.addCard(createdCard);
-        cards.put(createdCard.getNumber(), createdCard);
 
-        Transaction createdCardTransaction = new CardCreated(timestamp, createdCard.getNumber(), email, iban);
+        String cardNumber = createdCard.getNumber();
+        cards.put(cardNumber, createdCard);
+
+        Transaction createdCardTransaction = new CardCreated(timestamp, cardNumber, email, iban);
         addTransaction(refAccount, createdCardTransaction);
 
         return createdCard;
     }
 
-    public Card getCard(String cardNumber) {
+    /**
+     * @param cardNumber the number of the card
+     * @return a reference to the Card
+     */
+    public Card getCard(final String cardNumber) {
         Card result = cards.get(cardNumber);
         if (result == null) {
             throw new NonExistingCardException(cardNumber);
@@ -146,20 +220,32 @@ public class Bank {
         return result;
     }
 
-    public void deleteCard(String email, String cardNumber, int timestamp) {
+    /**
+     * Delete a card
+     * @param email the email of the user that owns the card
+     * @param cardNumber the number of the card to delete
+     * @param timestamp the timestamp of the operation
+     */
+    public void deleteCard(final String email, final String cardNumber, final int timestamp) {
         Card cardToDel = getCard(cardNumber);
 
         Account refAccount = getAccountByIban(cardToDel.getAssociatedAccount().getIban());
         checkEmailAccountMatch(refAccount, email);
 
-        Transaction destroyedTransaction = new CardDestroyed(timestamp, cardNumber, email, refAccount.getIban());
+        Transaction destroyedTransaction = new CardDestroyed(timestamp, cardNumber,
+                email, refAccount.getIban());
         addTransaction(refAccount, destroyedTransaction);
 
         cards.remove(cardToDel.getNumber());
         cardToDel.getAssociatedAccount().deleteCard(cardToDel);
     }
 
-    public void checkCardStatus(String cardNumber, int timestamp) {
+    /**
+     * Update the status of a card
+     * @param cardNumber the number of the card
+     * @param timestamp the timestamp of the operation
+     */
+    public void checkCardStatus(final String cardNumber, final int timestamp) {
         Card refCard = cards.get(cardNumber);
         if (refCard == null) {
             throw new NonExistingCardException(cardNumber);
@@ -176,8 +262,17 @@ public class Bank {
         }
     }
 
-    public void payOnline(String cardNumber, double amount, String currency, int timestamp,
-                          String commerciant, String email) {
+    /**
+     * Make a card online payment
+     * @param cardNumber the number of the card used for the payment
+     * @param amount the amount to pay
+     * @param currency the currency in which the payment is made
+     * @param timestamp the timestamp of the operation
+     * @param commerciant the commerciant to be paid
+     * @param email the email of the user that owns the card used for the payment
+     */
+    public void payOnline(final String cardNumber, final double amount, final String currency,
+                          final int timestamp, final String commerciant, final String email) {
         Card cardUsed = getCard(cardNumber);
 
         Account refAccount = getAccountByIban(cardUsed.getAssociatedAccount().getIban());
@@ -189,7 +284,8 @@ public class Bank {
             return;
         }
 
-        double convertedAmount = currencyManager.convert(amount, currency, refAccount.getCurrency());
+        double convertedAmount = currencyExchanger.convert(amount,
+                currency, refAccount.getCurrency());
 
         if (refAccount.ableToPaySum(convertedAmount)) {
             refAccount.decreaseFunds(convertedAmount);
@@ -210,15 +306,30 @@ public class Bank {
         }
     }
 
-    public void setAlias(String email, String iban, String alias) {
+    /**
+     * Create an alias for a given account
+     * @param email the email of the account's owner
+     * @param iban the IBAN of user's account
+     * @param alias the desired alias
+     */
+    public void setAlias(final String email, final String iban, final String alias) {
         Account accountRef = getAccountByIban(iban);
         checkEmailAccountMatch(accountRef, email);
 
         aliases.put(alias, iban);
     }
 
-    public void sendMoney(String fromIban, double amount, String toAliasOrIban, int timestamp,
-                          String email, String description) {
+    /**
+     * Make a funds transfer between two accounts
+     * @param fromIban the IBAN of the sender account
+     * @param amount the amount to send (in sender's currency)
+     * @param toAliasOrIban the alias or IBAN of the receiver account
+     * @param timestamp the timestamp of the operation
+     * @param email the email of the sender user
+     * @param description the description of the payment
+     */
+    public void sendMoney(final String fromIban, final double amount, final String toAliasOrIban,
+                          final int timestamp, final String email, final String description) {
         Account fromAccount = getAccountByIban(fromIban);
         checkEmailAccountMatch(fromAccount, email);
 
@@ -231,19 +342,30 @@ public class Bank {
             addTransaction(fromAccount, insufficientFundsTransaction);
             return;
         }
-        double convertedAmount = currencyManager.convert(amount, fromAccount.getCurrency(), toAccount.getCurrency());
+
+        double convertedAmount = currencyExchanger.convert(amount,
+                fromAccount.getCurrency(), toAccount.getCurrency());
         toAccount.addFunds(convertedAmount);
 
-        Transaction sentTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
-                amount, fromAccount.getCurrency(), TransferPayment.Type.SENT);
+        Transaction sentTransaction = new TransferPayment(timestamp, description, fromIban,
+                toAliasOrIban, amount, fromAccount.getCurrency(), TransferPayment.Type.SENT);
         addTransaction(fromAccount, sentTransaction);
 
-        Transaction receivedTransaction = new TransferPayment(timestamp, description, fromIban, toAliasOrIban,
-                convertedAmount, toAccount.getCurrency(), TransferPayment.Type.RECEIVED);
+        Transaction receivedTransaction = new TransferPayment(timestamp, description, fromIban,
+                toAliasOrIban, convertedAmount, toAccount.getCurrency(),
+                TransferPayment.Type.RECEIVED);
         addTransaction(toAccount, receivedTransaction);
     }
 
-    public void splitPayment(List<String> ibanList, int timestamp, String currency, double amount) {
+    /**
+     * Make a payment shared across multiple accounts
+     * @param ibanList the list of IBANs of the involved accounts
+     * @param timestamp the timestamp of the operation
+     * @param currency the currency in which the payment is made
+     * @param amount the amount to pay
+     */
+    public void splitPayment(final List<String> ibanList, final int timestamp,
+                             final String currency, final double amount) {
         ArrayList<Account> fromAccounts = new ArrayList<>(ibanList.size());
         for (String currentIban : ibanList) {
             fromAccounts.add(getAccountByIban(currentIban));
@@ -254,7 +376,8 @@ public class Bank {
 
         Account accountWithInsufficientFunds = null;
         for (Account account : fromAccounts) {
-            double convertedAmount = currencyManager.convert(amountPerPerson, currency, account.getCurrency());
+            double convertedAmount = currencyExchanger.convert(amountPerPerson,
+                    currency, account.getCurrency());
 
             if (!account.ableToPaySum(convertedAmount)) {
                 accountWithInsufficientFunds = account;

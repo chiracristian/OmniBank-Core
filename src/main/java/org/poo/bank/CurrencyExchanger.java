@@ -9,11 +9,15 @@ import org.poo.fileio.ExchangeInput;
 import java.util.List;
 
 @Getter
-public class CurrencyManager {
+public final class CurrencyExchanger {
     private final Graph<String, Double> conversionRates;
     private final BFSShortestPath<String, Double> conversionPaths;
 
-    public CurrencyManager(ExchangeInput[] exchangeInputs) {
+    /**
+     * Construct a new currency exchanger
+     * @param exchangeInputs the known exchange rates
+     */
+    public CurrencyExchanger(final ExchangeInput[] exchangeInputs) {
         conversionRates = new DefaultDirectedWeightedGraph<>(Double.class);
 
         for (ExchangeInput currentIn : exchangeInputs) {
@@ -33,16 +37,22 @@ public class CurrencyManager {
         conversionPaths = new BFSShortestPath<>(conversionRates);
     }
 
-    public double convert(double amountToExchange, String from, String to) {
-        if (from.equals(to)) {
-            return amountToExchange;
-        }
-        List<Double> conversionRates = conversionPaths.getPath(from, to).getEdgeList();
+    /**
+     * Convert an amount from a currency to another
+     * @param amountToExchange the initial amount to convert
+     * @param from the initial currency
+     * @param to the desired currency
+     * @return the amount converted in the desired currency
+     */
+    public double convert(final double amountToExchange, final String from, final String to) {
+        List<Double> requiredConversions = conversionPaths.getPath(from, to).getEdgeList();
 
         double result = amountToExchange;
-        for (Double currentRate : conversionRates) {
-            result *= currentRate;
+
+        for (Double currentConversion : requiredConversions) {
+            result *= currentConversion;
         }
+
         return result;
     }
 }

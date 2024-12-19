@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.fileio.CommandInput;
 
-public abstract class Command {
-    protected int timestamp;
+abstract class Command {
+    protected final int timestamp;
 
-    public Command(CommandInput input) {
+    Command(final CommandInput input) {
         this.timestamp = input.getTimestamp();
     }
 

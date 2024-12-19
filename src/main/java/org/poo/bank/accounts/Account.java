@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
 import org.poo.bank.Card;
-import org.poo.bank.accounts.transactions.Transaction;
-import org.poo.bank.exceptions.NotEnoughFundsException;
-import org.poo.bank.exceptions.NotSavingsAccountException;
+import org.poo.transactions.Transaction;
+import org.poo.exceptions.NotEnoughFundsException;
+import org.poo.exceptions.NotSavingsAccountException;
 import org.poo.utils.Utils;
 
 import java.util.ArrayList;
@@ -24,22 +24,31 @@ public class Account {
     private final ArrayList<Card> cards;
     private final ArrayList<Transaction> transactions;
 
+
+    /**
+     * Represents the amount and the timestamp of a payment to a commerciant
+     */
     @Getter
-    public static class CommerciantPayments {
+    public static class CommerciantPaymentData {
         private final double amount;
         private final int timestamp;
 
-        public CommerciantPayments(double amount, int timestamp) {
+        public CommerciantPaymentData(final double amount, final int timestamp) {
             this.amount = amount;
             this.timestamp = timestamp;
         }
     }
-    private final TreeMap<String, ArrayList<CommerciantPayments>> commerciants;
+    private final TreeMap<String, ArrayList<CommerciantPaymentData>> commerciants;
 
     @Setter
     private double minimumBalance;
 
-    public Account(String ownerEmail, String currency) {
+    /**
+     * Create a new classic account
+     * @param ownerEmail the email of the owner
+     * @param currency the currency
+     */
+    public Account(final String ownerEmail, final String currency) {
         this.iban = Utils.generateIBAN();
         this.balance = 0.0;
         this.ownerEmail = ownerEmail;
@@ -51,15 +60,28 @@ public class Account {
         this.minimumBalance = 0;
     }
 
-    public void addFunds(double amount) {
+    /**
+     * Add money to the account
+     * @param amount how much to add
+     */
+    public void addFunds(final double amount) {
         balance += amount;
     }
 
-    public boolean ableToPaySum(double amount) {
+    /**
+     * Check if the account contains enough funds to make a payment
+     * @param amount the amount balance has to be greater than or equal
+     * @return whether the account has enough funds or not
+     */
+    public boolean ableToPaySum(final double amount) {
         return balance >= amount;
     }
 
-    public void decreaseFunds(double amount) {
+    /**
+     * Subtract money from the account
+     * @param amount the amount to decrease by the balance of the account
+     */
+    public void decreaseFunds(final double amount) {
         if (ableToPaySum(amount)) {
             balance -= amount;
         } else {
@@ -67,38 +89,76 @@ public class Account {
         }
     }
 
-    public void addTransaction(Transaction transaction) {
+    /**
+     * Add a transaction to the list of transactions made by the account
+     * @param transaction the transaction to add
+     */
+    public void addTransaction(final Transaction transaction) {
         transactions.add(transaction);
     }
 
-    public void addCommerciant(String commerciant, double amount, int timestamp) {
+    /**
+     * Add a commerciant to the list of commerciants that the account made payments to
+     * @param commerciant the name of the commerciant
+     * @param amount the amount paid
+     * @param timestamp the timestamp
+     */
+    public void addCommerciant(final String commerciant, final double amount, final int timestamp) {
         if (!commerciants.containsKey(commerciant)) {
             commerciants.put(commerciant, new ArrayList<>());
         }
-        commerciants.get(commerciant).add(new CommerciantPayments(amount, timestamp));
+        commerciants.get(commerciant).add(new CommerciantPaymentData(amount, timestamp));
     }
 
-    public void addCard(Card card) {
+    /**
+     * Add a card to the list of cards associated to the account
+     * @param card the card to add
+     */
+    public void addCard(final Card card) {
         cards.add(card);
     }
 
-    public void deleteCard(Card card) {
+    /**
+     * Remove a card from the list of cards associated to the account
+     * @param card the card to remove
+     */
+    public void deleteCard(final Card card) {
         cards.remove(card);
     }
 
+    /**
+     * @return the type of the account
+     */
     public String getType() {
         return AccountType.CLASSIC.getString();
     }
 
+    /**
+     * Add interest to the account.
+     * This option is available only for savings accounts.
+     * @return the added interest
+     */
     public double addInterest() {
         throw new NotSavingsAccountException(this);
     }
 
-    public void changeInterestRate(double interestRate) {
+    /**
+     * Change the interest rate of the account.
+     * @param interestRate the new interest rate
+     */
+    public void changeInterestRate(final double interestRate) {
         throw new NotSavingsAccountException(this);
     }
 
-    public ObjectNode getReport(ObjectMapper mapper, int startTimestamp, int endTimestamp) {
+    /**
+     * Generate a report of the transactions in a given interval
+     * @param mapper the ObjectMapper to use
+     * @param startTimestamp the start timestamp contained in the report
+     * @param endTimestamp the end timestamp contained in the report
+     * @return the report contents as an ObjectNode
+     */
+    public ObjectNode getReport(final ObjectMapper mapper,
+                                final int startTimestamp, final int endTimestamp) {
         ObjectNode outputNode = mapper.createObjectNode();
 
         outputNode.put("IBAN", iban);
@@ -119,7 +179,16 @@ public class Account {
         return outputNode;
     }
 
-    public ObjectNode getSpendingReport(ObjectMapper mapper, int startTimestamp, int endTimestamp) {
+    /**
+     * Generate a spending report of the account in a given interval, containing the list of
+     * payments to the involved commerciants, and how much was paid to each commerciant
+     * @param mapper the ObjectMapper to use
+     * @param startTimestamp the start timestamp contained in the report
+     * @param endTimestamp the end timestamp contained in the report
+     * @return the report contents as an ObjectNode
+     */
+    public ObjectNode getSpendingReport(final ObjectMapper mapper,
+                                        final int startTimestamp, final int endTimestamp) {
         ObjectNode outputNode = mapper.createObjectNode();
 
         outputNode.put("IBAN", iban);
@@ -142,7 +211,7 @@ public class Account {
         ArrayNode commerciantsNode = mapper.createArrayNode();
         for (String commerciant : commerciants.keySet()) {
             double totalAmount = 0.0;
-            for (Account.CommerciantPayments currentPayment : commerciants.get(commerciant)) {
+            for (CommerciantPaymentData currentPayment : commerciants.get(commerciant)) {
                 if (currentPayment.getTimestamp() < startTimestamp) {
                     continue;
                 } else if (currentPayment.getTimestamp() > endTimestamp) {
@@ -163,7 +232,12 @@ public class Account {
         return outputNode;
     }
 
-    public ObjectNode toJSON(ObjectMapper mapper) {
+    /**
+     * Get the data of the account in JSON format
+     * @param mapper the ObjectMapper to use
+     * @return the data of the account, as an ObjectNode
+     */
+    public ObjectNode toJSON(final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("IBAN", iban);

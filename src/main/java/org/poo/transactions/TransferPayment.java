@@ -1,10 +1,10 @@
-package org.poo.bank.accounts.transactions;
+package org.poo.transactions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 
-public class TransferPayment extends Transaction {
+public final class TransferPayment extends Transaction {
     private final String description;
     private final String senderIban;
     private final String receiverIban;
@@ -18,14 +18,15 @@ public class TransferPayment extends Transaction {
 
         private final String string;
 
-        Type(String string) {
+        Type(final String string) {
             this.string = string;
         }
     }
     private final Type type;
 
-    public TransferPayment(int timestamp, String description, String senderIban,
-                           String receiverIban, double amount, String currency, Type type) {
+    public TransferPayment(final int timestamp, final String description, final String senderIban,
+                           final String receiverIban, final double amount, final String currency,
+                           final Type type) {
         super(timestamp);
         this.description = description;
         this.senderIban = senderIban;
@@ -36,7 +37,7 @@ public class TransferPayment extends Transaction {
     }
 
     @Override
-    public ObjectNode toJson(ObjectMapper mapper) {
+    public ObjectNode toJson(final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("timestamp", timestamp);

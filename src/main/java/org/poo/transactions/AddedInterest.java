@@ -1,11 +1,11 @@
-package org.poo.bank.accounts.transactions;
+package org.poo.transactions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class AddedInterest extends Transaction {
+public final class AddedInterest extends Transaction {
     private final double amount;
-    public AddedInterest(int timestamp, double amount) {
+    public AddedInterest(final int timestamp, final double amount) {
         super(timestamp);
         this.amount = amount;
     }
@@ -16,7 +16,7 @@ public class AddedInterest extends Transaction {
     }
 
     @Override
-    public ObjectNode toJson(ObjectMapper mapper) {
+    public ObjectNode toJson(final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("timestamp", timestamp);

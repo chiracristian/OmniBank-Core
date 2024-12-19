@@ -1,4 +1,4 @@
-package org.poo.bank.accounts.transactions;
+package org.poo.transactions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 import java.util.Locale;
 
-public class SplitPayment extends Transaction {
+public final class SplitPayment extends Transaction {
     private final String currency;
     private final double amountPaid;
     private final List<String> involvedAccounts;
@@ -15,13 +15,14 @@ public class SplitPayment extends Transaction {
 
     private final String description;
 
-    public SplitPayment(int timestamp, String currency, double amountPaid, double totalAmount,
-                        List<String> involvedAccounts) {
+    public SplitPayment(final int timestamp, final String currency, final double amountPaid,
+                        final double totalAmount, final List<String> involvedAccounts) {
         this(timestamp, currency, amountPaid, totalAmount, involvedAccounts, null);
     }
 
-    public SplitPayment(int timestamp, String currency, double amountPaid, double totalAmount,
-                        List<String> involvedAccounts, String accountWithNotEnough) {
+    public SplitPayment(final int timestamp, final String currency, final double amountPaid,
+                        final double totalAmount, final List<String> involvedAccounts,
+                        final String accountWithNotEnough) {
         super(timestamp);
         this.currency = currency;
         this.amountPaid = amountPaid;
@@ -33,7 +34,7 @@ public class SplitPayment extends Transaction {
     }
 
     @Override
-    public ObjectNode toJson(ObjectMapper mapper) {
+    public ObjectNode toJson(final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("timestamp", timestamp);
@@ -48,7 +49,8 @@ public class SplitPayment extends Transaction {
         result.set("involvedAccounts", accountsNode);
 
         if (accountWithNotEnough != null) {
-            String errorMessage = "Account " + accountWithNotEnough + " has insufficient funds for a split payment.";
+            String errorMessage = "Account " + accountWithNotEnough
+                    + " has insufficient funds for a split payment.";
             result.put("error", errorMessage);
         }
 

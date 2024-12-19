@@ -6,18 +6,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.poo.bank.Bank;
 import org.poo.fileio.CommandInput;
 
-class PrintTransactions extends Command {
+final class PrintTransactions extends Command {
     public static final String COMMAND = "printTransactions";
 
     private final String email;
 
-    PrintTransactions(CommandInput input) {
+    PrintTransactions(final CommandInput input) {
         super(input);
         this.email = input.getEmail();
     }
 
     @Override
-    public ObjectNode executeAndGetOutput(Bank bank, ObjectMapper mapper) {
+    public ObjectNode executeAndGetOutput(final Bank bank, final ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 
         result.put("command", COMMAND);

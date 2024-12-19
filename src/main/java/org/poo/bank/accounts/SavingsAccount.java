@@ -4,13 +4,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
-import org.poo.bank.accounts.transactions.Transaction;
+import org.poo.transactions.Transaction;
 
 @Getter
-public class SavingsAccount extends Account {
+public final class SavingsAccount extends Account {
     private double interestRate;
 
-    public SavingsAccount(String ownerEmail, String currency, double interestRate) {
+    /**
+     * Create a new savings account
+     * @param ownerEmail the email of the owner
+     * @param currency the currency
+     * @param interestRate the initial interest rate
+     */
+    public SavingsAccount(final String ownerEmail, final String currency,
+                          final double interestRate) {
         super(ownerEmail, currency);
         this.interestRate = interestRate;
     }
@@ -21,7 +28,8 @@ public class SavingsAccount extends Account {
     }
 
     @Override
-    public ObjectNode getReport(ObjectMapper mapper, int startTimestamp, int endTimestamp) {
+    public ObjectNode getReport(final ObjectMapper mapper,
+                                final int startTimestamp, final int endTimestamp) {
         ObjectNode outputNode = mapper.createObjectNode();
 
         outputNode.put("IBAN", getIban());
@@ -45,7 +53,8 @@ public class SavingsAccount extends Account {
     }
 
     @Override
-    public ObjectNode getSpendingReport(ObjectMapper mapper, int startTimestamp, int endTimestamp) {
+    public ObjectNode getSpendingReport(final ObjectMapper mapper,
+                                        final int startTimestamp, final int endTimestamp) {
         ObjectNode result = mapper.createObjectNode();
         result.put("error", "This kind of report is not supported for a saving account");
         return result;
@@ -59,7 +68,7 @@ public class SavingsAccount extends Account {
     }
 
     @Override
-    public void changeInterestRate(double interestRate) {
-        this.interestRate = interestRate;
+    public void changeInterestRate(final double newInterestRate) {
+        this.interestRate = newInterestRate;
     }
 }
