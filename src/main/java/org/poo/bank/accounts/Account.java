@@ -103,7 +103,8 @@ public class Account {
      * @param amount the amount paid
      * @param timestamp the timestamp
      */
-    public void addCommerciant(final String commerciant, final double amount, final int timestamp) {
+    public void addCommerciantPayment(final String commerciant,
+                                      final double amount, final int timestamp) {
         if (!commerciants.containsKey(commerciant)) {
             commerciants.put(commerciant, new ArrayList<>());
         }

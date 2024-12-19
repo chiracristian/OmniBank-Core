@@ -295,7 +295,7 @@ public final class Bank {
             return;
         }
 
-        refAccount.addCommerciant(commerciant, convertedAmount, timestamp);
+        refAccount.addCommerciantPayment(commerciant, convertedAmount, timestamp);
 
         Transaction successTransaction = new CardPayment(timestamp, convertedAmount, commerciant);
         addTransaction(refAccount, successTransaction);
