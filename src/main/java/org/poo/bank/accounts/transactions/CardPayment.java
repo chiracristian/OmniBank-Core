@@ -14,6 +14,11 @@ public class CardPayment extends Transaction {
     }
 
     @Override
+    public boolean displayedInSpendingReports() {
+        return true;
+    }
+
+    @Override
     public ObjectNode toJson(ObjectMapper mapper) {
         ObjectNode result = mapper.createObjectNode();
 

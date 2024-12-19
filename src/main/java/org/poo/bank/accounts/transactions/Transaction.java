@@ -12,5 +12,9 @@ abstract public class Transaction {
         this.timestamp = timestamp;
     }
 
+    public boolean displayedInSpendingReports() {
+        return false;
+    }
+
     abstract public ObjectNode toJson(ObjectMapper mapper);
 }

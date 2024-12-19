@@ -11,6 +11,7 @@ import org.poo.bank.exceptions.NotEnoughFundsException;
 import org.poo.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 @Getter
 public class Account {
@@ -18,8 +19,21 @@ public class Account {
     private double balance;
     private final String ownerEmail;
     private final String currency;
+
     private final ArrayList<Card> cards;
     private final ArrayList<Transaction> transactions;
+
+    @Getter
+    public static class CommerciantPayments {
+        private final double amount;
+        private final int timestamp;
+
+        public CommerciantPayments(double amount, int timestamp) {
+            this.amount = amount;
+            this.timestamp = timestamp;
+        }
+    }
+    private final TreeMap<String, ArrayList<CommerciantPayments>> commerciants;
 
     @Setter
     private double minimumBalance;
@@ -32,11 +46,11 @@ public class Account {
 
         this.cards = new ArrayList<>();
         this.transactions = new ArrayList<>();
+        this.commerciants = new TreeMap<>();
         this.minimumBalance = 0;
     }
 
     public void addFunds(double amount) {
-        //System.out.println("Added " + amount + " " + currency + " to " + iban);
         balance += amount;
     }
 
@@ -46,7 +60,6 @@ public class Account {
 
     public void decreaseFunds(double amount) {
         if (ableToPaySum(amount)) {
-            //System.out.println("Subtracted " + amount + " " + currency + " from " + iban);
             balance -= amount;
         } else {
             throw new NotEnoughFundsException(this);
@@ -55,6 +68,14 @@ public class Account {
 
     public void addTransaction(Transaction transaction) {
         transactions.add(transaction);
+    }
+
+    public void addCommerciant(String commerciant, double amount, int timestamp) {
+        if (!commerciants.containsKey(commerciant)) {
+            commerciants.put(commerciant, new ArrayList<>());
+        }
+        //commerciants.put(commerciant, new CommerciantPayments(amount, timestamp));
+        commerciants.get(commerciant).add(new CommerciantPayments(amount, timestamp));
     }
 
     public void addCard(Card card) {

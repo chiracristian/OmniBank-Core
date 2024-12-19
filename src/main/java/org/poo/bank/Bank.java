@@ -4,14 +4,10 @@ import lombok.Getter;
 import org.poo.bank.accounts.Account;
 import org.poo.bank.accounts.transactions.*;
 import org.poo.bank.exceptions.*;
-import org.poo.fileio.CommerciantInput;
 import org.poo.fileio.ObjectInput;
 import org.poo.fileio.UserInput;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 public class Bank {
     /**
@@ -35,7 +31,8 @@ public class Bank {
      */
     private final HashMap<String, Card> cards;
 
-    private final ArrayList<CommerciantCategory> commerciants;
+    //private final ArrayList<CommerciantCategory> commerciantCategories;
+    //private final TreeSet<String> commerciants;
 
     private final CurrencyManager currencyManager;
 
@@ -49,13 +46,14 @@ public class Bank {
         accounts = new HashMap<>();
         aliases = new HashMap<>();
         cards = new HashMap<>();
-        commerciants = new ArrayList<>();
+        //commerciantCategories = new ArrayList<>();
 
-        if (input.getCommerciants() != null) {
-            for (CommerciantInput commIn : input.getCommerciants()) {
-                commerciants.add(new CommerciantCategory(commIn));
-            }
-        }
+//        if (input.getCommerciants() != null) {
+//            for (CommerciantInput commIn : input.getCommerciants()) {
+//                commerciantCategories.add(new CommerciantCategory(commIn));
+//            }
+//        }
+        //commerciants = new TreeSet<>();
 
         currencyManager = new CurrencyManager(input.getExchangeRates());
     }
@@ -199,6 +197,8 @@ public class Bank {
 
             createCard(refAccount.getIban(), email, true, timestamp);
         }
+
+        refAccount.addCommerciant(commerciant, convertedAmount, timestamp);
 
         Transaction successTransaction = new CardPayment(timestamp, convertedAmount, commerciant);
         addTransaction(refAccount, successTransaction);
