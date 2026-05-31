@@ -63,3 +63,7 @@ The repository includes comprehensive automated checkstyle routines to maintain 
 mvn clean install
 chmod +x src/main/resources/checkstyle.sh && ./src/main/resources/checkstyle.sh
 ```
+
+## Acknowledgments
+* The automated validation testing suite and foundational `fileio` data-parsing classes were designed and provided by the *Object Oriented Programming Course* team at the *Faculty of Automatic Control and Computer Science, National University of Science and Technology Politehnica Bucharest*.
+* This implementation was developed independently as a showcase of production-ready design patterns and algorithmic optimization.
