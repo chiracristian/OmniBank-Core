@@ -1,66 +1,65 @@
-# CHIRA Cristian-Ioan-George, grupa 322CD - Descriere rezolvare proiect etapa 1
+# OmniBank Core
 
-## Structură cod
+A high-performance, modular core banking simulation engine built in Java. The system models complex retail banking infrastructure, including multi-currency account management, graph-based currency exchange optimization, transaction auditing, automated commercial spending tracking, and an extensible behavioral command workflow.
 
-Am început prin a crea clasele `Bank`, `Account`, `Card` și `User`. Pentru simplitatea
-accesării datelor, clasa `Bank` păstrează în tabele de dispersie referințe către toți
-utilizatorii, toate conturile, toate aliasurile și toate cardurile. Fiecare cont îșî ține 
-minte, în `ArrayList`-uri toate cardurile și toate tranzacțiile aferente acestuia. În mod
-similar, fiecare utilizator este prevăzut cu `ArrayList`-uri ce păstrează conturile sale,
-precum și tranzacțiile ce s-au efectuat asupra lor.
+## Key Architecture & Design Choices
 
-## Modalitate prelucrare comenzi
+### 1. Unified Ledger & Data Topology
+The banking core manages a highly structured data layer within the central `Bank` coordinator to guarantee deterministic state tracking and efficient data lookup.
+* **Linked Operations:** Employs a `LinkedHashMap` for the user ledger to preserve the chronological order of user enrollment while maintaining $O(1)$ retrieval speeds.
+* **Decoupled Lookups:** Implements granular memory indexes using distinct `HashMap` structures to look up accounts by IBAN, cards by card number, and custom account aliases independently.
+* **Encapsulated Relations:** Embeds encapsulated collection arrays within specific `User` and `Account` instances to isolate localized transaction streams and active card pools.
 
-Pentru a prelucra comenzile am ales să folosesc **Command Pattern**, având o clasa
-abstractă `Command`, ce are membrul `timestamp`, deoarece se regăsește la toate
-comenzile, un invocator ce la construcție primește comenzile și banca asupra cărora
-să aibă loc, prevăzut cu o metodă care execută toate comenzile și pune output-ul lor
-într-un ArrayNode. Pentru a crea ușor comenzile concrete, reprezentate fiecare de
-câte o clasă package-private, am folosit **Factory Pattern**. Toate acestea le-am
-pus în pachetul `commands`
+### 2. Behavioral Execution Layer & Command Abstraction
+System commands are fully decoupled from core business domains using an extensible behavioral design to ensure modular scalability and audit compliance.
+* **Command Pattern:** Encapsulates unique bank activities into isolated command components extending a unified abstract `Command` layout carrying uniform processing timestamps.
+* **Event Sourcing:** Every transactional trigger records an immutable, strongly typed `Transaction` entity into the target account's internal ledger.
+* **Polymorphic Reporting:** Leverages structural polymorphism inside the `Transaction` hierarchy to handle specialized reporting visibility, filtering events dynamically via properties like `displayedInSpendingReports()`.
 
-## Implementare schimburi valutare
+### 3. Graph-Theoretic Currency Exchange Pipeline
+To manage cross-border currency conversions across complex financial pairs, the backend implements an advanced graph topology powered by the `JGraphT` library.
+* **Adjacency Mapping:** Models active fiat types as vertices within a `DefaultDirectedWeightedGraph`, mapping explicitly provided exchange parameters as directional weights.
+* **Matrix Integrity:** Automates data completion at initialization by computing and inserting the inverse rate coefficient ($1.0 / \text{directRate}$) for every pair.
+* **Arbitrage Resolution:** Employs a Breadth-First Search (`BFSShortestPath`) traversal strategy to identify the path with the minimal edge count between distant foreign tokens, executing continuous edge multiplication across the path to transform balances precisely.
 
-Pentru a implementa schimburile valutare, am inclus în proiect dependența `JGraphT`, stocând
-într-un graf toate monedele existente ca noduri și rata de schimb dintre ele este reprezentată
-de muchiile dintre aceste noduri. La construcția instanței de `CurrencyExchanger`, în graf
-am adăugat și muchii pentru conversii inverse celor date din fișierul de intrare. Pentru a
-efectua o conversie, se găsește drumul cu cele mai puține muchii dintre monedele date și
-valoarea de convertit este înmulțită cu valoarea dată fiecărei muchii din drumul găsit.
+### 4. Categorized Accounting & Financial Reporting
+Auditing modules generate time-bounded, detailed financial statements across varying retail criteria.
+* **Chronological Auditing:** Evaluates classic transactional records by traversing internal history blocks sequentially, breaking execution lines the moment a timestamp limits threshold is exceeded.
+* **Lexicographical Grouping:** Uses an ordered `TreeMap` inside the `Account` layer to map commercial activities, automatically organizing merchant categories alphabetically.
+* **Spend Analysis Matrix:** Computes precise expenditure indicators by cross-referencing nested `CommerciantPaymentData` nodes with strict chronological date parameters.
 
-## Implementare tranzacții
-Pentru a păstra tranzacțiile, am creat pachetul `transactions`, în care am pus clasa abstractă
-`Transaction` ce are o funcție pentru afișare în format JSON și tranzacțiile concrete
-ce extind clasa anterior menționată. Orice tranzacție trebuie adăuga cu metoda
-`addTransaction` din `Bank`, care pune tranzacția atât în lista specifică utilizatorului,
-cât și în lista corespunzătoare contului asupra căruia s-a efectuat tranzacția.
+## Project Structure
 
-## Implementare generare de rapoarte
-Pentru a genera un raport clasic, `Account` este prevăzut cu metoda `getReport`, ce preia
-toate tranzacțiile în intervalul de timp cerut și le pune în format JSON.
 
-Pentru a putea face raportul de cheltuieli, `Account` dispune de un `TreeMap` care are 
-chei comercianții (aceștia vor rămâne mereu în ordine alfabetică) și ca valori câte un
-vector de instanțe ale clasei interne `CommerciantPaymentData` (având în componență
-sumele cheltuite și `timestamp`-ul lor). Raportul de cheltuieli este generat similar
-ca și cel clasic, numai că afișează doar tranzacțiile cu cardul și la fiecare comerciant
-se iterează prin plățile către acesta pentru a aduna doar plățile din intervalul dat
-pentru a le afișa (doar dacă suma lor nu este zero).
+```
 
-## Feedback
-Ca dificultate, această temă mi s-a părut mai simplă decât tema 0, nu sunt sigur dacă
-datorită faptului că specificația a fost mai simplă decât la prima temă sau doar
-datorită experienței.
+├── bank/           # Core domain topology (User, Bank, Card, CurrencyExchanger)
+│   └── accounts/   # Specialized banking product models (Account, SavingsAccount)
+├── checker/        # Code style profiles and validation setups
+├── commands/       # Pattern command modules and execution wrappers
+├── exceptions/     # Domain-specific runtime exception definitions
+├── fileio/         # I/O schema layouts for parsing source JSON feeds
+└── transactions/   # Strongly typed event ledger components
 
-Pentru voi, ca sugestie pentru viitoarele teme: să faceți testele specifice fiecărei
-funcționalități să cuprindă toate edge case-urile corespunzătoare lor, ci nu să fie 
-prevăzute doar în testele cu input mare. Spre exemplu, la această temă, puteau fi incluse
-comenzi specifice contului de economii aplicate asupra conturilor clasice și în testul 13,
-nu doar în testul 18.
+```
 
-Totodată, toată funcționalitatea prevăzută în cerință să fie testată: la această temă nu
-am văzut în niciun test apelul corect al comenzii `addInterest` asupra unui cont de 
-economii (care în opinia mea, ar fi avut sens să existe măcar o dată în testul 13). De
-asemenea, nu am observat nici testarea raportului clasic aplicat asupra unui cont de
-economii (voi ați spus în cerință în cazul ăsta să includă doar încasări de dobândă sau
-schimbări ale acesteia).
+## System Requirements & Build Automation
+* **Engine Environment:** Java SDK 21
+* **Dependency & Lifecycle Management:** Apache Maven
+* **Core Frameworks & Tools:** JGraphT (Directed weighted graphs), Jackson (JSON mapping), Lombok
+
+### Compilation
+Build the production artifact using the standard Maven pipeline:
+
+```bash
+mvn clean compile
+```
+
+### Execution & Testing
+
+The repository includes comprehensive automated checkstyle routines to maintain structural readability and compliance:
+
+```bash
+mvn clean install
+chmod +x src/main/resources/checkstyle.sh && ./src/main/resources/checkstyle.sh
+```
